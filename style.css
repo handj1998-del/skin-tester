@@ -289,3 +289,34 @@ h1{font-size:19px;font-weight:500;letter-spacing:.18em;margin:0 0 16px;text-inde
 :focus-visible{outline:2px solid var(--ink)}
 .num,.kicker,.ring-text b,.metric-head em,.h-item .sc,.topbar .date{font-variant-numeric:lining-nums}
 .kicker,.num,.warn-title{color:var(--rose-d)}
+
+/* ===== v1.0.9 인트로: 첫 화면에 시작 버튼 노출 ===== */
+#screen-intro{padding-top:calc(12px + var(--safe-t))}
+.intro-fold{display:flex;flex-direction:column;min-height:calc(100vh - 12px - var(--safe-t) - 16px);min-height:calc(100svh - 12px - var(--safe-t) - 16px);padding-bottom:16px}
+.intro-fold .brand-bar{min-height:30px}
+.intro-fold .hero{flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 0 18px}
+.intro-fold .hero-seal{width:min(70vw,300px,max(132px,calc(100vh - 400px)));width:min(70vw,300px,max(132px,calc(100svh - 400px)));margin:0 auto clamp(14px,3svh,28px)}
+.intro-fold h1{margin:0 0 10px}
+.intro-fold .sub{font-size:13px;line-height:1.6;margin:0}
+.intro-actions{margin-top:0;gap:10px}
+.intro-actions .row .btn{font-size:14px;padding:15px 8px;letter-spacing:.02em}
+.guide-link{display:inline-flex;gap:6px;align-self:center;align-items:center;margin-top:4px;padding:8px 10px;font-size:12.5px;letter-spacing:.06em;color:var(--sub);text-decoration:none}
+.guide-link span{font-size:12px;color:var(--rose-d)}
+#intro-guide{scroll-margin-top:16px;margin-top:8px}
+@media (max-height:700px){
+  .intro-fold .hero{padding-bottom:14px}
+  .btn{padding:15px 16px}
+  .intro-actions .row .btn{padding:13px 8px}
+  .intro-actions{gap:8px}
+  .guide-link{padding:6px 10px;margin-top:2px}
+}
+@media (max-height:600px){
+  .intro-fold h1{font-size:17px;margin-bottom:6px}
+  .intro-fold .sub{font-size:12.5px}
+  .btn{padding:13px 14px;font-size:14.5px}
+  .intro-actions .row .btn{padding:12px 6px;font-size:13.5px}
+}
+/* 카메라 화면 짧은 촬영 가이드 */
+.cam-tips{position:absolute;left:0;right:0;bottom:calc(150px + var(--safe-b));display:flex;justify-content:center;gap:6px;flex-wrap:wrap;padding:0 16px;opacity:0;transition:opacity .5s;pointer-events:none}
+.cam-tips.show{opacity:1}
+.cam-tips span{font-size:12px;letter-spacing:.04em;color:#f6f2ee;border:1px solid rgba(246,242,238,.45);background:rgba(20,16,15,.35);padding:5px 10px;border-radius:999px}

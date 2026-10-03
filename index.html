@@ -34,33 +34,45 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="stylesheet" href="style.css?v=1.0.8">
+<link rel="stylesheet" href="style.css?v=1.0.9">
 </head>
 <body>
 <div id="app">
 
   <!-- 1. 인트로 -->
   <main><section id="screen-intro" class="screen active" aria-label="시작">
-    <header class="brand-bar"><button class="refresh-btn" id="btn-refresh" type="button" aria-label="새로고침 (최신 버전 불러오기)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg><span>새로고침</span></button></header>
+    <div class="intro-fold">
+      <header class="brand-bar"><button class="refresh-btn" id="btn-refresh" type="button" aria-label="새로고침 (최신 버전 불러오기)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg><span>새로고침</span></button></header>
+      <div class="hero">
+        <div class="hero-seal">
+          <svg class="hero-ring" viewBox="0 0 300 300" aria-hidden="true">
+          <circle cx="150" cy="150" r="146" fill="none" stroke="#2b2523" stroke-opacity=".16" stroke-width="1"/>
+          <circle cx="150" cy="150" r="128" fill="none" stroke="#2b2523" stroke-opacity=".08" stroke-width="1" stroke-dasharray="1 5"/>
+          <path d="M150 4 A146 146 0 0 1 253.2 46.8" fill="none" stroke="#a9796d" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+          <img src="logo.svg" alt="H.O.W" class="hero-logo" width="200" height="45">
+        </div>
+        <h1>피부결 테스터</h1>
+        <p class="sub">폰 카메라로 매끄러움 · 모공 · 잔주름을 분석해요</p>
+      </div>
+      <div class="actions intro-actions">
+        <button class="btn primary" id="btn-start">측정 시작하기</button>
+        <div class="row">
+          <label class="btn ghost" for="file-input">카메라 앱으로 촬영</label>
+          <label class="btn ghost" for="file-input3">앨범에서 선택</label>
+        </div>
+        <input type="file" id="file-input" class="vh" aria-label="기본 카메라 앱으로 촬영하기" accept="image/*" capture="environment">
+        <input type="file" id="file-input3" class="vh" aria-label="앨범에서 사진 선택하기" accept="image/*">
+        <a class="guide-link" href="#intro-guide">촬영 가이드 보기<span aria-hidden="true">↓</span></a>
+      </div>
+    </div>
     <div class="inapp-banner" id="inapp-banner" hidden>
       <b><span id="inapp-name"></span> 안에서 열었어요</b>
       <p>앱 내 브라우저에서는 실시간 카메라가 동작하지 않을 수 있어요. <span id="inapp-browser">Chrome</span>으로 열면 더 정확하게 측정할 수 있어요.</p>
       <div class="row"><a class="btn small primary" id="btn-open-external" href="#">Chrome으로 열기</a><button class="btn small ghost" id="btn-copy-link">링크 복사</button></div>
     </div>
-    <div class="hero">
-      <div class="hero-seal">
-        <svg class="hero-ring" viewBox="0 0 300 300" aria-hidden="true">
-          <circle cx="150" cy="150" r="146" fill="none" stroke="#2b2523" stroke-opacity=".16" stroke-width="1"/>
-          <circle cx="150" cy="150" r="128" fill="none" stroke="#2b2523" stroke-opacity=".08" stroke-width="1" stroke-dasharray="1 5"/>
-          <path d="M150 4 A146 146 0 0 1 253.2 46.8" fill="none" stroke="#a9796d" stroke-width="1.6" stroke-linecap="round"/>
-        </svg>
-        <img src="logo.svg" alt="H.O.W" class="hero-logo" width="200" height="45">
-      </div>
-      <h1>피부결 테스터</h1>
-      <span class="rule" aria-hidden="true"></span>
-      <p class="sub">카메라로 피부를 가까이 찍으면<br>매끄러움 · 모공 · 잔주름을 분석해 드려요</p>
-    </div>
-    <div class="card guide">
+    <div id="intro-guide">
+    <div class="card guide" id="guide-card">
       <h2><span class="kicker">Guide</span>정확한 측정을 위한 촬영 가이드</h2>
       <ul class="guide-list">
         <li><span class="num" aria-hidden="true">01</span><div><b>밝고 고른 빛</b><small>창가 자연광 또는 밝은 실내조명. 그림자가 지지 않게</small></div></li>
@@ -70,12 +82,8 @@
         <li><span class="num" aria-hidden="true">05</span><div><b>메이크업 없이</b><small>세안 후 맨얼굴, 유분은 가볍게 정돈</small></div></li>
       </ul>
     </div>
+    </div>
     <div class="actions">
-      <button class="btn primary" id="btn-start">카메라로 측정하기</button>
-      <label class="btn ghost" for="file-input">기본 카메라 앱으로 촬영하기</label>
-      <input type="file" id="file-input" class="vh" aria-label="기본 카메라 앱으로 촬영하기" accept="image/*" capture="environment">
-      <label class="btn text" for="file-input3">앨범에서 사진 선택하기</label>
-      <input type="file" id="file-input3" class="vh" aria-label="앨범에서 사진 선택하기" accept="image/*">
       <button class="btn text" id="btn-history">지난 측정 기록 보기</button>
     </div>
     <p class="privacy">H.O.W는 사진을 받지 않아요. 사진은 서버로 전송되지 않고 내 폰 안에서만 분석돼요</p>
@@ -109,7 +117,8 @@
         <button class="shutter" id="btn-shutter" aria-label="촬영"><span></span></button>
         <button class="icon-btn small" id="btn-flip" aria-label="카메라 전환"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0 1 14.3-3.3L20 8"/><path d="M20 3v5h-5"/><path d="M20 15a8 8 0 0 1-14.3 3.3L4 16"/><path d="M4 21v-5h5"/></svg></button>
       </div>
-      <p class="cam-hint">약 10cm 거리에서 초점이 맞으면 촬영하세요</p>
+      <p class="cam-hint" id="cam-hint">약 10cm 거리에서 초점이 맞으면 촬영하세요</p>
+      <div class="cam-tips" id="cam-tips" aria-hidden="true"><span>밝고 고른 빛</span><span>플래시 끄기</span><span>약 10cm</span><span>맨얼굴</span></div>
       <div class="cam-error" id="cam-error" hidden>
         <div class="cam-error-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
         <h2 id="cam-error-title">카메라를 사용할 수 없어요</h2>
@@ -196,7 +205,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=1.0.8"></script>
-<script src="app.js?v=1.0.8"></script>
+<script src="analyze.js?v=1.0.9"></script>
+<script src="app.js?v=1.0.9"></script>
 </body>
 </html>

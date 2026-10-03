@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.0.8';
+  const APP_VERSION = '1.0.9';
   const BUILD_DATE = '2026-10-03';
   window.APP_VERSION = APP_VERSION;
   const $ = (s) => document.querySelector(s);
@@ -92,6 +92,7 @@
   function startCamera() {
     show('camera');
     hideCamError();
+    const tips = $('#cam-tips'); if (tips) { tips.classList.add('show'); clearTimeout(startCamera._tipT); startCamera._tipT = setTimeout(() => tips.classList.remove('show'), 4000); }
     $('#tap-to-play').hidden = true;
     stopCamera();
     if (!window.isSecureContext) {
@@ -478,6 +479,8 @@
   $('#btn-cam-retry').onclick = startCamera;
   $('#tap-to-play').onclick = () => { const v = $('#video'); v.play().then(() => ($('#tap-to-play').hidden = true)).catch(() => camError('unknown')); };
   setupInappBanner();
+  const gl = document.querySelector('.guide-link');
+  if (gl) gl.onclick = (e) => { e.preventDefault(); const g = $('#guide-card'); g.scrollIntoView({ behavior: 'smooth', block: 'start' }); g.setAttribute('tabindex', '-1'); try { g.focus({ preventScroll: true }); } catch (x) {} };
   // 안드로이드 뒤로가기: 앱을 닫지 않고 처음 화면으로
   window.addEventListener('popstate', () => {
     const onIntro = $('#screen-intro').classList.contains('active');
