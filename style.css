@@ -397,3 +397,73 @@ ul.rec-list li::before{content:'';position:absolute;left:0;top:.75em;width:6px;h
 @media (min-width:700px) and (min-height:1000px){
   .intro-fold{min-height:880px;padding-top:calc((100vh - 1000px) / 2)}
 }
+
+/* ===== v1.2.0 얼굴 전체 분석 (선택 모드) ===== */
+.intro-links{display:flex;align-items:center;justify-content:center;gap:2px;margin-top:4px}
+.intro-links .guide-link{margin-top:0}
+.intro-links .sep{width:1px;height:12px;background:var(--line);margin:0 4px}
+.face-link{border:0;background:none;font:inherit;font-size:12.5px;letter-spacing:.06em;color:var(--ink);padding:8px 10px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.face-link em{font-style:normal;font-family:var(--serif);font-size:12px;letter-spacing:.08em;color:var(--rose-d);border:1px solid var(--line);border-radius:999px;padding:0 7px;line-height:1.5}
+.no-flexgap .face-link em{margin-left:6px}
+@media (max-height:700px){.face-link{padding:6px 10px}}
+/* 카메라: 얼굴 모드 */
+.face-oval{display:none}
+#screen-camera.face-mode .cam-guide,#screen-camera.face-mode .cam-tips{display:none}
+#screen-camera.face-mode .face-oval{display:block;position:relative;width:min(64vw,300px);height:min(84vw,400px);width:240px;height:320px;border:1.5px dashed rgba(255,255,255,.85);border-radius:50%;box-shadow:0 0 0 2000px rgba(0,0,0,.28)}
+@supports (width:min(1px,2px)){#screen-camera.face-mode .face-oval{width:min(64vw,300px);height:min(85vw,400px)}}
+.face-oval span{position:absolute;left:50%;top:-34px;transform:translateX(-50%);white-space:nowrap;font-size:12.5px;color:#fff;background:rgba(0,0,0,.42);padding:5px 12px;border-radius:999px;letter-spacing:.02em}
+/* 다운로드 진행 */
+.dl-bar{height:2px;background:rgba(43,37,35,.1);border-radius:2px;overflow:hidden;margin:10px auto 0;max-width:260px}
+.dl-bar i{display:block;height:100%;width:0;background:var(--rose);transition:width .25s ease}
+/* 얼굴 분석 안내 */
+.face-intro{text-align:center;padding:26px 22px 22px}
+.fi-mark{width:84px;height:98px;display:block;margin:4px auto 14px}
+.face-intro h2{font-size:19px;font-weight:600;letter-spacing:.14em;margin:0 0 10px}
+.face-intro .sub{margin:0 0 18px}
+.fi-status{margin:0 0 18px}
+.fi-status p{font-size:12.5px;color:var(--sub);margin:8px 0 0;letter-spacing:.02em}
+.fi-status.done .dl-bar i{background:#5f7d72}
+.fi-status.done p{color:#5f7d72}
+.fi-status.err p{color:#a3604f}
+.fi-unsup{border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 16px;font-size:13px;line-height:1.7;color:var(--sub);text-align:left}
+.fi-unsup .btn{margin-top:10px;width:100%}
+#fi-actions{margin-top:0}
+.fi-tips{list-style:none;padding:16px 0 0;margin:18px 0 0;border-top:1px solid var(--line);text-align:left;font-size:13px;line-height:1.6;color:var(--sub)}
+.fi-tips li{padding:3px 0 3px 16px;position:relative}
+.fi-tips li::before{content:"";position:absolute;left:2px;top:11px;width:5px;height:5px;border-radius:50%;background:var(--rose);opacity:.6}
+.fi-tips b{color:var(--ink);font-weight:600}
+.fi-note{font-size:12px;line-height:1.65;color:var(--sub);margin:14px 0 0;text-align:left}
+/* 분석 중 (얼굴) */
+#screen-analyzing.face .scan-box canvas{filter:saturate(.85)}
+/* 결과 요약 */
+.face-summary{text-align:center}
+.face-summary h3{text-align:left}
+.face-type{display:block;font-size:24px;font-weight:600;letter-spacing:.1em;margin:6px 0 8px}
+.face-sum{font-size:13.5px;line-height:1.7;color:var(--sub);margin:0 0 16px;word-break:keep-all}
+.tu{display:grid;gap:10px;text-align:left}
+.tu-row{display:grid;grid-template-columns:64px 1fr 74px;align-items:center;gap:10px;font-size:13px}
+.tu-row span{color:var(--ink);font-weight:500}
+.tu-row .bar-bg{margin:0}
+.tu-row em{font-style:normal;text-align:right;font-weight:600;color:var(--ink)}
+.tu-row em small{font-weight:400;color:var(--sub);margin-left:5px;font-size:11.5px}
+#face-map{width:100%;height:auto;display:block;border-radius:2px}
+/* 구역 표 */
+.zone-table{display:block}
+.zrow{display:grid;grid-template-columns:1fr 1fr 58px;column-gap:14px;row-gap:6px;padding:12px 0;border-top:1px solid var(--line);align-items:end}
+.zrow:first-child{border-top:0;padding-top:4px}
+.zn{grid-column:1 / -1;font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center}
+.zn i{font-style:normal;display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;background:#2b2523;color:#fff;font-size:11px;font-weight:600;margin-right:8px}
+.zc small,.zt small{display:block;font-size:11px;color:var(--sub);letter-spacing:.04em;margin-bottom:4px}
+.zc em,.zt em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--ink);display:block;margin-top:4px}
+.zc em span{font-weight:400;color:var(--sub);margin-left:5px;font-size:11.5px}
+.zt{text-align:right}.zt em{font-family:var(--serif);font-size:20px;font-weight:500;margin-top:0;line-height:1}
+.mini{height:3px;background:rgba(43,37,35,.10);position:relative}
+.mini div{height:100%}
+.mini.mid::after{content:"";position:absolute;left:50%;top:-3px;width:1px;height:9px;background:rgba(43,37,35,.35)}
+.zrow.miss{grid-template-columns:1fr}.zmiss{font-size:12px;color:var(--sub)}
+/* 기록: 얼굴 항목 */
+.h-face .h-ico{width:46px;height:46px;border-radius:12px;border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);flex:none}
+.h-face .h-ico svg{width:34px;height:34px}
+.h-item .sc.sm{font-size:12.5px;font-weight:600;letter-spacing:.04em;font-family:inherit;color:var(--rose-d)}
+.no-flexgap .tu-row>*+*{margin-left:0}
+.fi-unsup p{margin:0}

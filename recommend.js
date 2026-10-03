@@ -120,5 +120,72 @@
       avoid: [['오렌지 브라운', '#b2661f'], ['카멜', '#bf9a6b'], ['머스터드', '#c49a2e']] },
   };
 
-  root.HowRecommend = { buildCare, buildMakeup, estimateTone, srgbToLab, SEASONS, NAMES };
+  // ---------- 4) 얼굴 전체 분석(붉은기 · 유분) 기반 케어/메이크업 ----------
+  // f = { type: 'oily'|'combo'|'drynormal', tLevel, uLevel, redLevel(볼 최대 0~2), redZones:[이름], texture }
+  function faceFocus(f) {
+    const red = f.redLevel >= 2 || (f.redZones && f.redZones.length > 0);
+    const oil = f.type === 'oily' || f.tLevel >= 2;
+    if (red && oil) return 'redoil';
+    if (red) return 'redness';
+    if (oil || f.type === 'combo') return f.type === 'combo' ? 'combo' : 'oil';
+    return f.redLevel === 1 ? 'calm' : 'dry';
+  }
+  const FACE_CARE = {
+    redness: { name: '붉은기 진정', headline: '자극을 줄이고 장벽을 채우는 진정 루틴',
+      am: ['미온수로 가볍게 세안 (뜨거운 물 피하기)', '판테놀·병풀(센텔라) 진정 토너를 손으로 눌러 흡수', '세라마이드 보습제 → 무기자차 등 순한 자외선 차단제'],
+      pm: ['약산성 저자극 클렌저로 짧게 세안', '진정 앰플(마데카소사이드·알란토인) 얇게', '세라마이드·스쿠알란 크림으로 마무리'],
+      ing: [['판테놀', '진정·보습'], ['병풀(센텔라)·마데카소사이드', '붉은기 진정'], ['세라마이드', '장벽 강화'], ['알란토인', '자극 완화'], ['나이아신아마이드(저농도)', '톤·장벽 보조 — 자극 시 중단']],
+      weekly: ['진정 시트 마스크 주 2~3회 (냉장 보관하면 더 시원해요)', '각질 케어는 쉬거나 PHA로 주 1회 이하'],
+      avoid: ['스크럽·강한 필링, 고농도 산(AHA/BHA) 연속 사용', '알코올·강한 향료가 많은 제품', '사우나·뜨거운 샤워 직후 바로 화장품 여러 겹', '새 제품은 귀 뒤 패치 테스트 후 사용'] },
+    oil: { name: '유분 밸런스', headline: '번들거림을 정돈하되 속건조는 막는 루틴',
+      am: ['약산성 젤 클렌저로 세안', '나이아신아마이드 세럼', '가벼운 수분 젤 → 산뜻한 자외선 차단제'],
+      pm: ['메이크업·선크림 클렌징 후 약산성 세안', 'BHA(살리실산) 토너 주 2~3회', '오일프리 수분 젤 크림'],
+      ing: [['BHA(살리실산)', '모공 속 피지·각질 정돈'], ['나이아신아마이드', '피지 밸런스'], ['아연 PCA', '번들거림 완화'], ['클레이(카올린)', '과잉 피지 흡착'], ['히알루론산', '가벼운 수분']],
+      weekly: ['클레이 마스크 주 1~2회 (10분 이내)', '낮에는 기름종이로 눌러서 유분만 덜어내기'],
+      avoid: ['하루 3회 이상 과도한 세안', '유분 많은 크림·오일 과다 사용', '수분 크림을 건너뛰기 (속건조로 피지가 늘 수 있어요)'] },
+    combo: { name: 'T존 유분 · 볼 보습', headline: '부위별로 다르게 — T존은 산뜻하게, 볼은 촉촉하게',
+      am: ['약산성 클렌저로 세안', '나이아신아마이드 세럼은 T존 위주', 'T존엔 젤, 볼엔 크림으로 나눠 바르기 → 자외선 차단제'],
+      pm: ['클렌징 후 약산성 세안', 'BHA 토너를 T존에만 주 2~3회', '볼은 세라마이드 크림으로 보습'],
+      ing: [['BHA(살리실산)', 'T존 피지 정돈'], ['나이아신아마이드', '유분·결 밸런스'], ['세라마이드', '볼 보습·장벽'], ['히알루론산', '가벼운 수분']],
+      weekly: ['클레이 마스크는 T존에만 주 1회', '볼은 수분 마스크 주 1~2회'],
+      avoid: ['얼굴 전체에 같은 유분 조절 제품 사용', '볼까지 강하게 각질 제거', '두꺼운 크림을 T존에 듬뿍'] },
+    redoil: { name: '진정 + 유분 정돈', headline: '자극 없이 피지를 정돈하는 순한 루틴',
+      am: ['미온수 + 약산성 젤 클렌저', '판테놀·병풀 진정 토너', '가벼운 수분 젤 → 순한 자외선 차단제'],
+      pm: ['저자극 클렌징', '저농도 BHA 또는 아연 PCA를 T존에만 주 1~2회', '진정 젤 크림'],
+      ing: [['병풀(센텔라)', '진정'], ['판테놀', '진정·보습'], ['아연 PCA', '피지 정돈'], ['저농도 BHA', 'T존 피지 정돈 — 자극 시 중단'], ['녹차 추출물', '산뜻한 진정']],
+      weekly: ['진정 마스크 주 2회, 클레이는 T존에만 주 1회 이하', '각질 케어는 PHA로 순하게'],
+      avoid: ['스크럽·강한 산 연속 사용', '알코올 많은 수렴 토너', '뜨거운 물 세안'] },
+    calm: { name: '컨디션 유지 · 진정', headline: '지금 균형을 지키며 가벼운 진정을 더하는 루틴',
+      am: ['약산성 클렌저 세안', '진정 토너(판테놀)', '보습제 → 자외선 차단제'],
+      pm: ['저자극 클렌징', '세라마이드 보습 크림'],
+      ing: [['판테놀', '진정·보습'], ['세라마이드', '장벽 유지'], ['히알루론산', '수분']],
+      weekly: ['진정 마스크 주 1~2회'], avoid: ['갑작스러운 고기능 제품 여러 개 동시 시작', '뜨거운 물 세안'] },
+    dry: { name: '수분 · 장벽 유지', headline: '유분이 적은 편 — 수분과 장벽을 채우는 루틴',
+      am: ['물 세안 또는 순한 클렌저', '히알루론산 세럼', '세라마이드 크림 → 자외선 차단제'],
+      pm: ['순한 클렌징', '보습 세럼 → 크림, 건조한 부위는 스쿠알란 오일 한 방울'],
+      ing: [['히알루론산', '수분 채움'], ['세라마이드', '장벽 강화'], ['스쿠알란', '유수분 보충'], ['판테놀', '보습·진정']],
+      weekly: ['수분 마스크 주 2회', '각질 케어는 PHA로 주 1회 이하'],
+      avoid: ['뽀득한 세정력의 클렌저', '알코올 토너', '건조한 실내에 오래 있기 (가습기 활용)'] },
+  };
+  function buildFaceCare(f) {
+    const k = faceFocus(f), C = FACE_CARE[k];
+    const am = C.am.slice(), pm = C.pm.slice();
+    if (f.texture != null && f.texture < 55) pm.push('결이 고르지 않은 부위는 주 1회 PHA로 순하게 정돈');
+    return { mode: k === 'dry' || k === 'calm' ? 'maintain' : 'focus', primary: k, priorityName: C.name, title: C.name, headline: C.headline,
+      am, pm, ingredients: C.ing, weekly: C.weekly, avoid: C.avoid };
+  }
+  function buildFaceMakeup(f) {
+    const k = faceFocus(f), red = k === 'redness' || k === 'redoil' || f.redLevel >= 1, tips = ['베이스는 얇게 여러 번 — 한 번에 두껍게 올리지 않기'];
+    let primer, finish, finishWhy;
+    if (f.type === 'oily') { primer = '피지 조절(매트) 프라이머 — T존과 코 옆 중심, 볼은 소량'; finish = '세미 매트'; finishWhy = '번들거림을 눌러주되 완전 매트보다 자연스러워 오래 가요.'; }
+    else if (f.type === 'combo') { primer = 'T존엔 피지 조절 프라이머, 볼엔 수분 프라이머로 나눠 바르기'; finish = '새틴 (T존 세미 매트 + 볼 은은한 윤기)'; finishWhy = '부위별로 마무리를 달리하면 T존은 덜 번들거리고 볼은 건조해 보이지 않아요.'; }
+    else { primer = '수분 · 글로우 프라이머 — 얼굴 전체 얇게'; finish = '세미 글로우 · 듀이'; finishWhy = '유분이 적은 편이라 촉촉한 마무리가 피부를 편안하고 생기 있게 보여줘요.'; }
+    if (f.type === 'oily' || f.type === 'combo') tips.push('파우더는 T존·코 옆에만 브러시로 가볍게', '수정 화장 전 기름종이로 유분을 눌러 덜어내기');
+    else tips.push('파우더는 생략하거나 눈 밑 번짐 방지용으로만 극소량', '스펀지를 살짝 적셔 두드리면 들뜸이 줄어요');
+    if (red) tips.push('붉은 부위는 그린 계열 컬러 코렉터를 아주 소량 — 두드려 펴기', '붉은기 부위는 컨실러를 문지르지 말고 눌러서 밀착', '블러셔는 볼 붉은기가 있으면 생략하거나 뉴트럴 톤을 아주 연하게');
+    else tips.push('블러셔는 볼 중앙보다 약간 위쪽에 연하게 — 생기만 더하기');
+    return { primer, finish, finishWhy, tips, focus: FACE_CARE[k].name };
+  }
+
+  root.HowRecommend = { buildCare, buildMakeup, buildFaceCare, buildFaceMakeup, faceFocus, estimateTone, srgbToLab, SEASONS, NAMES };
 })(typeof window !== 'undefined' ? window : globalThis);
