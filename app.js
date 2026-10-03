@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.1.0';
+  const APP_VERSION = '1.1.1';
   const BUILD_DATE = '2026-10-03';
   window.APP_VERSION = APP_VERSION;
   const $ = (s) => document.querySelector(s);
@@ -481,8 +481,8 @@
     // 테두리 프레임
     x.strokeStyle = LINE; x.lineWidth = 2; x.strokeRect(48, 48, W - 96, H - 96);
     x.textAlign = 'center';
-    if (LOGO.complete && LOGO.naturalWidth) { const lw = 300, lh = lw * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, W / 2 - lw / 2, 120, lw, lh); }
-    else { x.fillStyle = INK; x.font = `300 80px ${SERIF}`; x.fillText('H.O.W', W / 2, 185); }
+    if (LOGO.complete && LOGO.naturalWidth) { const lw = 250, lh = lw * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, W / 2 - lw / 2, 120, lw, lh); }
+    else { x.fillStyle = INK; x.font = `600 72px ${F}`; x.fillText('H.O.W', W / 2, 185); }
     x.fillStyle = SUB; x.font = `500 26px ${F}`; spaced(x, '피부결 리포트', W / 2, 262, 8);
     const d = new Date(ts); x.font = `400 30px ${SERIF}`; x.fillStyle = SUB; x.fillText(`${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}`, W / 2, 308);
     x.fillStyle = ACC; x.fillRect(W / 2 - 24, 340, 48, 2);
@@ -519,7 +519,7 @@
     let px = cx - total / 2; chars.forEach((ch, i) => { x.fillText(ch, px, y); px += widths[i] + sp; });
     x.textAlign = al;
   }
-  const LOGO = new Image(); LOGO.src = 'logo.svg';
+  const LOGO = new Image(); LOGO.src = 'logo.svg?v=' + APP_VERSION;
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   let sharing = false;
   async function shareResult() {

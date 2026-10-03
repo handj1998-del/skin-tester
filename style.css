@@ -365,3 +365,7 @@ ul.rec-list li::before{content:'';position:absolute;left:0;top:.75em;width:6px;h
 .sw-row.avoid .dot::after{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:var(--ink);transform:rotate(45deg)}
 
 #rec-card p,#rec-card li,#rec-card dd{word-break:keep-all;overflow-wrap:anywhere}
+
+/* v1.1.1 굵고 간결한 워드마크 */
+.hero-logo{width:56%}
+.topbar-logo{height:13px}
