@@ -373,7 +373,7 @@
     const x = c.getContext('2d');
     const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#fbeee7'); g.addColorStop(1, '#f6e2d8'); x.fillStyle = g; x.fillRect(0, 0, W, H);
     const F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif';
-    x.fillStyle = '#b9675f'; x.font = `700 30px ${F}`; x.textAlign = 'center'; x.fillText('SKIN TEXTURE LAB', W / 2, 90);
+    x.textAlign = 'center'; if (LOGO.complete && LOGO.naturalWidth) x.drawImage(LOGO, W / 2 - 96, 52, 192, 60); else { x.fillStyle = '#3b2f2c'; x.font = `600 40px ${F}`; x.fillText('H.O.W', W / 2, 95); }
     x.fillStyle = '#3b2f2c'; x.font = `800 64px ${F}`; x.fillText('나의 피부결 리포트', W / 2, 175);
     x.fillStyle = '#8a7a74'; x.font = `400 30px ${F}`; const d = new Date(ts); x.fillText(`${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`, W / 2, 225);
     // 사진
@@ -396,14 +396,15 @@
     x.fillText('※ 의학적 진단이 아닌 참고용 결과이며, 조명·촬영 조건에 따라 달라질 수 있어요', W / 2, H - 70);
     return c;
   }
+  const LOGO = new Image(); LOGO.src = 'logo.svg';
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   async function shareResult() {
     if (!current) return;
     const c = buildShareImage();
     const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
-    const file = new File([blob], `피부결_${current.result.scores.overall}점.png`, { type: 'image/png' });
+    const file = new File([blob], `HOW_피부결_${current.result.scores.overall}점.png`, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try { await navigator.share({ files: [file], title: '나의 피부결 리포트', text: `내 피부결 점수는 ${current.result.scores.overall}점!` }); return; }
+      try { await navigator.share({ files: [file], title: 'H.O.W 피부결 리포트', text: `H.O.W 피부결 테스터 — 내 피부결 점수는 ${current.result.scores.overall}점!` }); return; }
       catch (e) { if (e.name === 'AbortError') return; }
     }
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name;

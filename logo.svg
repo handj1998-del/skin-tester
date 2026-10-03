@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" role="img" aria-label="H.O.W">
+  <title>H.O.W</title>
+  <g fill="none" stroke="#3b2f2c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 20 V80 M72 20 V80 M22 50 H72"/>
+    <circle cx="150" cy="50" r="30"/>
+    <path d="M222 20 L240 80 L259 34 L278 80 L296 20"/>
+  </g>
+  <g fill="#d58b84">
+    <circle cx="101" cy="77" r="5.5"/>
+    <circle cx="199" cy="77" r="5.5"/>
+  </g>
+</svg>

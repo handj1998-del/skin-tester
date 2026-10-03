@@ -147,3 +147,6 @@ a.btn{text-decoration:none}
 :focus-visible{outline:3px solid #b9675f;outline-offset:2px;border-radius:8px}
 .vh:focus-visible + *{outline:3px solid #b9675f}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+
+.brand-logo{height:30px;width:auto;display:inline-block}
+.topbar-logo{height:15px;width:auto;vertical-align:-1px;margin-right:4px}
