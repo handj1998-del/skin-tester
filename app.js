@@ -1,5 +1,9 @@
 (function () {
   'use strict';
+  // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
+  const APP_VERSION = '1.0.7';
+  const BUILD_DATE = '2026-10-03';
+  window.APP_VERSION = APP_VERSION;
   const $ = (s) => document.querySelector(s);
   const SA = window.SkinAnalyzer;
   const HKEY = 'skinTexture.history.v1';
@@ -462,7 +466,54 @@
     if (show._expectPop) { show._expectPop = false; if (!onIntro) try { history.pushState({ app: 1 }, ''); } catch (e) {} return; }
     if (!onIntro) { stopCamera(); show._pop = true; show('intro'); }
   });
-  if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update && r.update()).catch(() => {}));
+  if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=' + APP_VERSION, { updateViaCache: 'none' }).then((r) => r.update && r.update()).catch(() => {}));
+
+  // ---------- 버전 표시 · 새로고침 · 업데이트 확인 ----------
+  document.querySelectorAll('.js-ver-text').forEach((el) => (el.textContent = `v${APP_VERSION} · ${BUILD_DATE}`));
+  function cmpVer(a, b) {
+    const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d > 0 ? 1 : -1; }
+    return 0;
+  }
+  let refreshing = false;
+  async function hardRefresh() {
+    if (refreshing) return; refreshing = true;
+    toast('최신 버전을 불러오는 중…');
+    try {
+      if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map((r) => r.unregister())); }
+      if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map((k) => caches.delete(k))); }
+    } catch (e) {}
+    stopCamera();
+    // 측정 기록(localStorage)은 유지
+    const u = new URL(location.href); u.searchParams.set('r', Date.now().toString(36)); u.hash = '';
+    location.replace(u.toString());
+  }
+  async function fetchLatest() {
+    const res = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('http ' + res.status);
+    return res.json();
+  }
+  function showUpdateBanner(v) {
+    $('#update-text').textContent = `새 버전(v${v})이 있어요`;
+    $('#update-banner').hidden = false;
+  }
+  async function checkForUpdate(manual) {
+    try {
+      const j = await fetchLatest();
+      if (j && j.version && cmpVer(j.version, APP_VERSION) > 0) { showUpdateBanner(j.version); return true; }
+      if (manual) toast(`최신 버전이에요 (v${APP_VERSION})`);
+    } catch (e) { if (manual) toast('지금은 업데이트를 확인할 수 없어요'); }
+    return false;
+  }
+  window.__checkForUpdate = checkForUpdate;
+  $('#btn-refresh').onclick = hardRefresh;
+  $('#btn-update').onclick = hardRefresh;
+  $('#btn-update-close').onclick = () => ($('#update-banner').hidden = true);
+  document.querySelectorAll('.js-ver').forEach((b) => (b.onclick = () => checkForUpdate(true)));
+  // 정리: 새로고침용 쿼리(r)는 주소창에서 제거
+  try { const u = new URL(location.href); if (u.searchParams.has('r')) { u.searchParams.delete('r'); history.replaceState(history.state, '', u.toString()); } } catch (e) {}
+  window.addEventListener('load', () => setTimeout(() => checkForUpdate(false), 800));
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(false); });
   $('#btn-res-home').onclick = () => show('intro');
   $('#btn-retry').onclick = startCamera;
   $('#btn-invalid-retry').onclick = startCamera;

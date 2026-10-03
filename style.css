@@ -162,3 +162,15 @@ a.btn{text-decoration:none}
 .invalid-card .btn{margin-top:8px}
 [tabindex="-1"]:focus{outline:none}
 .btn{width:100%;box-sizing:border-box}
+
+.brand{position:relative}
+.refresh-btn{position:absolute;right:0;top:50%;transform:translateY(-50%);display:inline-flex;align-items:center;gap:4px;border:1px solid #ecd6cc;background:rgba(255,255,255,.7);color:var(--sub);font:inherit;font-size:12px;font-weight:600;letter-spacing:0;padding:6px 10px;border-radius:999px;cursor:pointer}
+.refresh-btn span{font-size:14px;line-height:1;color:var(--rose-d)}
+.refresh-btn:active{transform:translateY(-50%) scale(.96)}
+.app-foot{text-align:center;margin:14px 0 4px}
+.ver-label{border:0;background:none;font:inherit;font-size:11.5px;color:#a3928b;letter-spacing:.02em;padding:8px 10px;cursor:pointer}
+.ver-label:active{color:var(--rose-d)}
+.update-banner{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:98;display:flex;align-items:center;gap:10px;background:#3b2f2c;color:#fff;padding:8px 8px 8px 16px;border-radius:999px;font-size:13.5px;box-shadow:0 8px 24px rgba(59,47,44,.25);max-width:calc(100% - 24px);white-space:nowrap}
+.update-banner button{border:0;font:inherit;cursor:pointer}
+#btn-update{background:#d58b84;color:#fff;font-weight:700;padding:7px 12px;border-radius:999px;font-size:13px}
+.ub-close{background:none;color:#cbb9b2;font-size:13px;padding:6px}

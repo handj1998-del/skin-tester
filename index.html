@@ -33,14 +33,14 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=1.0.7">
 </head>
 <body>
 <div id="app">
 
   <!-- 1. 인트로 -->
   <main><section id="screen-intro" class="screen active" aria-label="시작">
-    <header class="brand"><img src="logo.svg" alt="H.O.W" class="brand-logo" width="96" height="30"></header>
+    <header class="brand"><img src="logo.svg" alt="H.O.W" class="brand-logo" width="96" height="30"><button class="refresh-btn" id="btn-refresh" type="button" aria-label="새로고침 (최신 버전 불러오기)"><span aria-hidden="true">↻</span> 새로고침</button></header>
     <div class="inapp-banner" id="inapp-banner" hidden>
       <b>⚠️ <span id="inapp-name"></span> 안에서 열었어요</b>
       <p>앱 내 브라우저에서는 실시간 카메라가 동작하지 않을 수 있어요. <span id="inapp-browser">Chrome</span>으로 열면 더 정확하게 측정할 수 있어요.</p>
@@ -81,6 +81,7 @@
         <p><b>유의사항</b> — 본 서비스는 피부결 경향을 보여주는 참고용 도구이며 의료기기나 의학적 진단이 아니에요. 피부 질환이 의심되면 전문의와 상담하세요.</p>
       </div>
     </details>
+    <footer class="app-foot"><button type="button" class="ver-label js-ver" aria-label="버전 정보, 눌러서 업데이트 확인">H.O.W 피부결 테스터 · <span class="js-ver-text">v</span></button></footer>
   </section>
 
   <!-- 2. 카메라 -->
@@ -170,6 +171,7 @@
     </div>
     <details class="privacy-detail"><summary>개인정보 · 이용 안내</summary><div class="privacy-body"><p>H.O.W는 사진을 수집하지 않아요. 사진은 이 기기 안에서만 분석되며 서버로 전송·저장되지 않아요. 측정 기록은 ‘기록 저장하기’를 누른 경우에만 이 휴대폰의 브라우저 저장소에 저장되고, 언제든 삭제할 수 있어요.</p></div></details>
     <p class="disclaimer">본 결과는 피부결의 상대적 경향을 보여주는 참고용 정보이며 <b>의학적 진단이 아닙니다.</b> 조명·거리·초점·카메라 기종에 따라 결과가 달라질 수 있으니, 변화를 비교할 때는 같은 장소·같은 조건에서 촬영해 주세요. 피부 질환이 의심되면 전문의와 상담하세요.</p>
+    <footer class="app-foot"><button type="button" class="ver-label js-ver" aria-label="버전 정보, 눌러서 업데이트 확인">H.O.W 피부결 테스터 · <span class="js-ver-text">v</span></button></footer>
   </section>
 
   <!-- 5. 기록 -->
@@ -178,13 +180,15 @@
     <div class="card"><h3>피부결 점수 추이</h3><canvas id="trend-canvas2" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas></div>
     <div class="card"><div id="history-list2" class="history-list"></div></div>
     <div class="actions"><button class="btn text" id="btn-clear">기록 전체 삭제</button></div>
+    <footer class="app-foot"><button type="button" class="ver-label js-ver" aria-label="버전 정보, 눌러서 업데이트 확인">H.O.W 피부결 테스터 · <span class="js-ver-text">v</span></button></footer>
   </section>
 
 </main>
+  <div class="update-banner" id="update-banner" role="status" hidden><span id="update-text">새 버전이 있어요</span><button type="button" id="btn-update">업데이트</button><button type="button" class="ub-close" id="btn-update-close" aria-label="닫기">✕</button></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=6"></script>
-<script src="app.js?v=6"></script>
+<script src="analyze.js?v=1.0.7"></script>
+<script src="app.js?v=1.0.7"></script>
 </body>
 </html>
