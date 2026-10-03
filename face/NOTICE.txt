@@ -1,0 +1,4 @@
+This folder contains MediaPipe Tasks Vision (@mediapipe/tasks-vision 1.0.1) runtime files
+and the Face Landmarker model (face_landmarker.task, float16 v1), Copyright Google LLC,
+licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
+They are self-hosted so face analysis runs entirely on the device (no third-party CDN).
