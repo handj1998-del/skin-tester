@@ -1,18 +1,23 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.2.0';
+  const APP_VERSION = '1.3.0';
   const BUILD_DATE = '2026-10-04';
   window.APP_VERSION = APP_VERSION;
   (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
   const $ = (s) => document.querySelector(s);
   const SA = window.SkinAnalyzer;
-  const HKEY = 'skinTexture.history.v1';
   const GUIDE_FRAC = 0.62;     // 화면 짧은 변 대비 가이드 크기
   const UPLOAD_FRAC = 0.7;     // 업로드 사진 중앙 크롭 비율
 
   let stream = null, facing = 'environment', meterTimer = null, torchOn = false;
-  let current = null; // {result, canvas, ts, saved}
+  let reportName = '', reportPages = null, reportP = null, reportBusy = false, reportTimer = 0; // 리포트 (메모리에만)
+  let current = null; // {result, canvas, ts} — 메모리에만, 화면을 벗어나면 삭제
+  // 공용(매장) 기기: 이전 버전이 남긴 기록·썸네일·설정을 시작할 때 모두 삭제하고, 이후에도 아무것도 저장하지 않음
+  (function wipeStored() {
+    try { const ks = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^(skinTexture\.|how\.)/.test(k)) ks.push(k); } ks.forEach((k) => localStorage.removeItem(k)); } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+  })();
 
   // ---------- 화면 전환 ----------
   function show(id) {
@@ -21,6 +26,7 @@
       else if (id === 'intro' && history.state && history.state.app && !show._pop) { show._expectPop = true; history.back(); }
     } catch (e) {}
     show._pop = false;
+    if (id === 'intro') wipeSession();
     document.querySelectorAll('.screen').forEach((s) => { const on = s.id === 'screen-' + id; s.classList.toggle('active', on); s.setAttribute('aria-hidden', on ? 'false' : 'true'); });
     window.scrollTo(0, 0);
     const h = document.querySelector('#screen-' + id + ' h1, #screen-' + id + ' h2, #screen-' + id + ' .topbar span');
@@ -270,7 +276,7 @@
     const data = canvas.getContext('2d').getImageData(0, 0, SA.WORK, SA.WORK).data;
     const result = SA.analyzeRGBA(data, SA.WORK);
     if (!fast) for (const s of steps) { $('#analyze-step').textContent = s; await sleep(480); }
-    current = { result, canvas, ts: Date.now(), saved: false };
+    wipeSession(); current = { result, canvas, ts: Date.now() };
     renderResult();
     return result;
   }
@@ -331,26 +337,14 @@
     renderRecs();
     // 시각화
     setViz('heat');
-    // 비교
-    const hist = loadHistory().filter((x) => x.mode !== 'face');
-    const prev = hist[0];
-    const d = $('#res-delta');
-    if (prev) {
-      const diff = s.overall - prev.scores.overall;
-      d.hidden = false;
-      d.className = 'delta ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : '');
-      d.textContent = `지난 측정(${fmtDate(prev.ts)}) 대비 ${diff > 0 ? '▲ ' + diff : diff < 0 ? '▼ ' + -diff : '변화 없음'}${diff ? '점' : ''}`;
-    } else d.hidden = true;
-    renderHistory('#history-card', '#trend-canvas', '#history-list', hist, s.overall);
-    $('#btn-save').textContent = '기록 저장하기'; $('#btn-save').disabled = false;
   }
   // ---------- 맞춤 추천 (케어 · 메이크업 · 컬러) ----------
   const REC = window.HowRecommend;
-  const SKEY = 'how.season.v1';
   let recTab = 'care';
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  function getSeasonChoice() { try { return localStorage.getItem(SKEY) || 'auto'; } catch (e) { return 'auto'; } }
-  function setSeasonChoice(v) { try { localStorage.setItem(SKEY, v); } catch (e) {} }
+  let seasonChoice = 'auto'; // 측정마다 초기화 (저장하지 않음)
+  function getSeasonChoice() { return seasonChoice; }
+  function setSeasonChoice(v) { seasonChoice = v; }
   function currentSeason() {
     const ch = getSeasonChoice();
     return ch !== 'auto' && REC.SEASONS[ch] ? ch : current.tone.season;
@@ -437,52 +431,14 @@
     $('#viz-legend').textContent = leg;
   }
 
-  // ---------- 기록 ----------
-  function loadHistory() { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) { return []; } }
-  function saveHistory(h) { try { localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 40))); return true; } catch (e) { return false; } }
-  function thumbOf(canvas) { const c = document.createElement('canvas'); c.width = c.height = 96; c.getContext('2d').drawImage(canvas, 0, 0, 96, 96); return c.toDataURL('image/jpeg', 0.7); }
-  function saveCurrent() {
-    if (!current) return;
-    if (current.result.invalid) return toast('측정이 완료되지 않은 결과는 저장할 수 없어요');
-    if (current.saved) return toast('이미 저장된 결과예요');
-    const h = loadHistory();
-    h.unshift({ ts: current.ts, scores: current.result.scores, grade: current.result.grade.key, thumb: thumbOf(current.canvas) });
-    if (saveHistory(h)) { current.saved = true; toast('기록이 저장됐어요. 다음 측정 때 비교해 드릴게요!'); $('#btn-save').textContent = '저장 완료 ✓'; $('#btn-save').disabled = true; }
-    else toast('저장 공간이 부족해요');
-    renderHistory('#history-card', '#trend-canvas', '#history-list', loadHistory());
+  // ---------- 세션 초기화 (다음 고객) ----------
+  function wipeSession() {
+    current = null; seasonChoice = 'auto'; recTab = 'care';
+    if (typeof resetReport === 'function') resetReport();
+    ['#viz-canvas', '#invalid-thumb', '#face-map', '#face-invalid-thumb', '#scan-canvas'].forEach((sel) => { const c = $(sel); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); });
+    ['#panel-care', '#panel-makeup', '#panel-color', '#metrics', '#face-zones', '#face-tu'].forEach((sel) => { const el = $(sel); if (el) el.innerHTML = ''; });
   }
-  function renderHistory(cardSel, canvasSel, listSel, hist, pendingScore) {
-    const card = cardSel ? $(cardSel) : null;
-    const points = hist.filter((x) => x.mode !== 'face').slice(0, 10).reverse().map((x) => ({ v: x.scores.overall, ts: x.ts }));
-    if (pendingScore != null && !(current && current.saved)) points.push({ v: pendingScore, ts: Date.now(), pending: true });
-    if (card) card.hidden = points.length < 2;
-    drawTrend($(canvasSel), points);
-    const list = $(listSel);
-    list.innerHTML = hist.length ? hist.slice(0, 12).map((x) => x.mode === 'face'
-      ? `<div class="h-item h-face"><span class="h-ico" aria-hidden="true"><svg viewBox="0 0 40 40"><ellipse cx="20" cy="20" rx="11" ry="14" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="14.5" cy="23" r="2.4" fill="#a9796d" fill-opacity=".45"/><circle cx="25.5" cy="23" r="2.4" fill="#a9796d" fill-opacity=".45"/></svg></span><div class="info"><b>${fmtDate(x.ts)} · 얼굴 전체</b>T존 유분 ${x.f.t}% · 볼 유분 ${x.f.u}% · 볼 붉은기 ${fmtSigned(cheekRed(x.f))}</div><span class="sc sm">${esc(x.tn || '')}</span></div>`
-      : `<div class="h-item"><img src="${x.thumb}" alt=""><div class="info"><b>${fmtDate(x.ts)}</b>매끄러움 ${x.scores.smooth} · 모공 ${x.scores.pore} · 잔주름 ${x.scores.lines}</div><span class="sc">${x.scores.overall}</span></div>`).join('') : '<p class="empty">아직 저장된 기록이 없어요</p>';
-  }
-  function drawTrend(cv, pts) {
-    const ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
-    ctx.clearRect(0, 0, W, H);
-    const pl = 40, pr = 20, pt = 20, pb = 34;
-    ctx.font = '20px Pretendard, sans-serif'; ctx.fillStyle = '#b3a39c'; ctx.strokeStyle = '#f0e3dc'; ctx.lineWidth = 1.5;
-    for (const g of [0, 50, 100]) { const y = pt + (H - pt - pb) * (1 - g / 100); ctx.beginPath(); ctx.moveTo(pl, y); ctx.lineTo(W - pr, y); ctx.stroke(); ctx.fillText(g, 4, y + 7); }
-    if (!pts.length) return;
-    const xs = (i) => pts.length === 1 ? (pl + W - pr) / 2 : pl + 10 + (W - pl - pr - 20) * i / (pts.length - 1);
-    const ys = (v) => pt + (H - pt - pb) * (1 - v / 100);
-    ctx.strokeStyle = '#2b2523'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath();
-    pts.forEach((p, i) => (i ? ctx.lineTo(xs(i), ys(p.v)) : ctx.moveTo(xs(i), ys(p.v)))); ctx.stroke();
-    pts.forEach((p, i) => {
-      ctx.fillStyle = p.pending ? '#fdfbf9' : '#2b2523'; ctx.strokeStyle = p.pending ? '#a9796d' : '#2b2523'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.arc(xs(i), ys(p.v), 5, 0, 7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#2b2523'; ctx.font = '500 24px "Cormorant Garamond", Georgia, serif'; ctx.textAlign = 'center';
-      ctx.fillText(p.v, xs(i), ys(p.v) - 14);
-      ctx.fillStyle = '#b3a39c'; ctx.font = '17px Pretendard, sans-serif';
-      const d = new Date(p.ts); ctx.fillText(p.pending ? '지금' : `${d.getMonth() + 1}/${d.getDate()}`, xs(i), H - 8);
-      ctx.textAlign = 'left';
-    });
-  }
+  function nextCustomer() { stopCamera(); exitFaceMode(); show('intro'); window.scrollTo(0, 0); }
 
   // ---------- 결과 이미지 ----------
   function buildShareImage() {
@@ -688,7 +644,7 @@
       const n = det.faceLandmarks ? det.faceLandmarks.length : 0;
       const res = t.FA.analyze(data, W, H, n ? det.faceLandmarks[0] : null, n);
       if (!fast) await sleep(600);
-      current = { mode: 'face', face: res, canvas: canvas, ts: Date.now(), saved: false };
+      wipeSession(); current = { mode: 'face', face: res, canvas: canvas, ts: Date.now() };
       renderFace();
     } catch (e) {
       console.warn('face analysis failed', e);
@@ -696,7 +652,6 @@
       show('face-intro');
     } finally { busy = false; $('#screen-analyzing').classList.remove('face'); }
   }
-  function cheekRed(f) { const a = f.z && f.z.cheekL, b = f.z && f.z.cheekR; const v = [a, b].filter(Boolean).map((q) => q[0]); return v.length ? Math.round(v.reduce((s, q) => s + q, 0) / v.length) : 0; }
   function fmtSigned(v) { return (v > 0 ? '+' : '') + v + '%'; }
   function faceRecInput(f) {
     const cl = f.zones.cheekL, cr = f.zones.cheekR;
@@ -736,17 +691,9 @@
         <div class="zc"><small>유분</small><div class="mini" aria-hidden="true"><div style="width:${Math.max(3, z.shineBar)}%;background:${SHINE_COL[z.shineLevel]}"></div></div><em>${LV[z.shineLevel]}<span>${z.shine}%</span></em></div>
         <div class="zt"><small>결 (참고)</small><em>${z.texture == null ? '—' : z.texture}</em></div></div>`;
     }).join('');
-    const prev = loadHistory().find((x) => x.mode === 'face');
-    const d = $('#face-delta');
-    if (prev) {
-      const nowF = window.HowFaceAnalyze.compact(f);
-      d.hidden = false; d.className = 'delta';
-      d.textContent = `지난 얼굴 분석(${fmtDate(prev.ts)}) 대비 · T존 유분 ${prev.f.t}% → ${nowF.t}% · 볼 붉은기 ${fmtSigned(cheekRed(prev.f))} → ${fmtSigned(cheekRed(nowF))}`;
-    } else d.hidden = true;
     moveRecCard(true);
     renderRecs();
     setFaceLayer('red');
-    $('#btn-face-save').textContent = '기록 저장하기'; $('#btn-face-save').disabled = false;
   }
   const FACE_LEGEND = {
     red: '진한 로즈색일수록 얼굴 평균보다 붉은기가 강한 구역이에요. 작은 점은 붉은기가 두드러진 지점이에요.',
@@ -783,14 +730,6 @@
     document.querySelectorAll('#face-layers button').forEach((b) => { const on = b.dataset.layer === layer; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
     const cv = $('#face-map'); drawFaceMap(cv.getContext('2d'), cv.width, cv.height, layer);
     $('#face-legend').textContent = FACE_LEGEND[layer];
-  }
-  function saveFace() {
-    if (!current || current.mode !== 'face' || current.face.invalid) return;
-    if (current.saved) return toast('이미 저장된 결과예요');
-    const h = loadHistory();
-    h.unshift({ mode: 'face', ts: current.ts, f: window.HowFaceAnalyze.compact(current.face), tn: current.face.type.name }); // 사진·좌표 없이 숫자만
-    if (saveHistory(h)) { current.saved = true; toast('기록이 저장됐어요. 다음 얼굴 분석 때 비교해 드릴게요!'); $('#btn-face-save').textContent = '저장 완료 ✓'; $('#btn-face-save').disabled = true; }
-    else toast('저장 공간이 부족해요');
   }
   function wrapText(x, text, maxW) {
     const words = text.split(' '), lines = []; let line = '';
@@ -843,9 +782,108 @@
   $('#btn-face-retake').onclick = startFaceCamera;
   $('#btn-face-again').onclick = () => openFaceIntro();
   $('#btn-face-home').onclick = () => { exitFaceMode(); show('intro'); };
-  $('#btn-face-save').onclick = saveFace;
+  $('#btn-face-next').onclick = nextCustomer;
   $('#btn-face-share').onclick = shareResult;
   $('#face-layers').onclick = (e) => { const l = e.target.dataset && e.target.dataset.layer; if (l) setFaceLayer(l); };
+
+  // ---------- 전체 결과 리포트 (report.js는 필요할 때만 불러옴) ----------
+  const APP_URL = 'https://handj1998-del.github.io/skin-tester/';
+  function resetReport() {
+    reportName = ''; reportPages = null; reportTimer && clearTimeout(reportTimer);
+    const inp = $('#rep-name'); if (inp) inp.value = '';
+    const pv = $('#rep-preview'); if (pv) pv.innerHTML = '';
+  }
+  function loadReportLib() {
+    if (window.HowReport) return Promise.resolve(window.HowReport);
+    if (!reportP) reportP = loadScript('report.js?v=' + APP_VERSION).then(() => window.HowReport).catch((e) => { reportP = null; throw e; });
+    return reportP;
+  }
+  function mk(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+  function reportData() {
+    const isFace = current.mode === 'face', S = REC.SEASONS[currentSeason()];
+    const d = {
+      mode: isFace ? 'face' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO,
+      title: isFace ? '얼굴 피부 분석 리포트' : '피부결 분석 리포트',
+      care: current.care, makeup: current.makeup, tone: current.tone, season: S, estSeason: REC.SEASONS[current.tone.season], seasonChosen: getSeasonChoice() !== 'auto',
+      skinRGB: current.skinRGB.map((v) => Math.round(v)),
+    };
+    if (isFace) {
+      const f = current.face;
+      d.type = f.type; d.summary = f.summary; d.warnings = f.warnings.slice();
+      d.tu = [{ label: 'T존 유분 (이마·코)', v: f.tShine, level: LV[f.tLevel], color: SHINE_COL[f.tLevel] }, { label: '볼 유분 (U존)', v: f.uShine, level: LV[f.uLevel], color: SHINE_COL[f.uLevel] }];
+      d.images = [['zones', '분석 구역', FACE_LEGEND.zones], ['red', '붉은기 지도', FACE_LEGEND.red], ['oil', '유분(광택) 지도', FACE_LEGEND.oil]].map((q) => { const c = mk(640, 640); drawFaceMap(c.getContext('2d'), 640, 640, q[0]); return { canvas: c, title: q[1], caption: q[2] }; });
+      d.zones = f.order.map((k, i) => { const z = f.zones[k]; if (!z || z.missing) return { n: i + 1, name: z ? z.name : k, missing: true };
+        return { n: i + 1, name: z.name, red: { level: LV[z.redLevel], text: fmtSigned(z.redPct), bar: z.redBar, color: RED_COL[z.redLevel] }, shine: { level: LV[z.shineLevel], text: z.shine + '%', bar: z.shineBar, color: SHINE_COL[z.shineLevel] }, texture: z.texture }; });
+      d.disclaimer = '얼굴 분석은 같은 사진 안에서 구역끼리 비교한 상대값이에요. 조명 방향·화이트밸런스·메이크업·카메라 기종에 따라 크게 달라지며 의학적 진단이 아닙니다. 피부 질환이 의심되면 전문의와 상담하세요.';
+    } else {
+      const r = current.result, sc = r.scores;
+      d.overall = sc.overall; d.grade = r.grade; d.warnings = r.warnings.slice();
+      d.metrics = METRICS.map((m) => ({ name: m.name, en: m.en, score: sc[m.key], label: label(sc[m.key]), color: toneOf(sc[m.key]), desc: m.desc + '.', note: sc[m.key] < 72 ? TIPS[m.key].p : '' }));
+      d.images = [['original', '원본 (분석 영역)'], ['heat', '거칠기 맵'], ['pores', '모공'], ['lines', '잔주름']].map((q) => { const c = mk(720, 720); SA.renderOverlay(c.getContext('2d'), current.canvas, r.viz, q[0]); return { canvas: c, title: q[1], caption: LEGEND[q[0]] + (q[0] === 'pores' ? ` 감지 ${r.viz.pores.length}개.` : '') }; });
+      d.disclaimer = '본 결과는 피부결의 상대적 경향을 보여주는 참고용 정보이며 의학적 진단이 아닙니다. 조명·거리·초점·카메라 기종에 따라 결과가 달라질 수 있어요. 피부 질환이 의심되면 전문의와 상담하세요.';
+    }
+    return d;
+  }
+  function reportFileBase() { const d = new Date(current.ts); return `HOW_${current.mode === 'face' ? '얼굴분석' : '피부결'}_리포트_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`; }
+  async function buildReport() {
+    const R = await loadReportLib();
+    try { await Promise.all([document.fonts.load('300 110px "Cormorant Garamond"'), document.fonts.load('500 24px "Cormorant Garamond"')]); } catch (e) {}
+    if (!LOGO.complete) await new Promise((r) => { LOGO.onload = LOGO.onerror = r; setTimeout(r, 1500); });
+    reportPages = R.render(reportData());
+    const pv = $('#rep-preview'); pv.innerHTML = '';
+    reportPages.forEach((c, i) => { c.setAttribute('role', 'img'); c.setAttribute('aria-label', `리포트 ${i + 1}쪽`); c.className = 'rep-page'; pv.appendChild(c); });
+    $('#rep-status').textContent = `A4 ${reportPages.length}쪽 · 미리보기`;
+    return reportPages;
+  }
+  async function openReport() {
+    if (!current || (current.mode === 'face' ? current.face.invalid : current.result.invalid)) return;
+    show('report');
+    $('#rep-date').textContent = fmtDate(current.ts);
+    $('#rep-name').value = reportName;
+    $('#rep-status').textContent = '리포트를 만드는 중…'; $('#rep-preview').innerHTML = '';
+    try { await buildReport(); }
+    catch (e) { console.warn('report', e); $('#rep-status').textContent = '리포트를 만들지 못했어요. 인터넷 연결을 확인한 뒤 다시 열어 주세요.'; }
+  }
+  function download(blob, name) {
+    const href = URL.createObjectURL(blob), a = document.createElement('a'); a.href = href; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(href), 60000);
+  }
+  function canvasBlob(c, type, q) { return new Promise((res, rej) => { if (c.toBlob) c.toBlob((b) => (b ? res(b) : rej(new Error('toBlob'))), type, q); else { try { const bin = atob(c.toDataURL(type, q).split(',')[1]), u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); res(new Blob([u], { type })); } catch (e) { rej(e); } } }); }
+  async function reportAction(btn, busyText, fn) {
+    if (reportBusy || !current) return; reportBusy = true;
+    const b = $(btn), t = b.textContent; b.setAttribute('aria-busy', 'true'); b.textContent = busyText;
+    try { if (!reportPages) await buildReport(); await fn(); }
+    catch (e) { console.warn('report action', e); toast('리포트를 저장하지 못했어요'); }
+    finally { b.textContent = t; b.removeAttribute('aria-busy'); reportBusy = false; }
+  }
+  async function reportImageBlob() { return canvasBlob(window.HowReport.toLongImage(reportPages, 0.75), 'image/jpeg', 0.9); }
+  async function reportPdfBlob() { return window.HowReport.toPDF(reportPages, { title: 'H.O.W Skin Report' }); }
+  async function saveReportImage() { download(await reportImageBlob(), reportFileBase() + '.jpg'); toast('리포트 이미지를 저장했어요'); }
+  async function saveReportPdf() {
+    let blob; try { blob = await reportPdfBlob(); } catch (e) { console.warn('pdf', e); toast('이 기기에서는 PDF를 만들 수 없어 이미지로 저장할게요'); return saveReportImage(); }
+    download(blob, reportFileBase() + '.pdf'); toast('PDF 리포트를 저장했어요');
+  }
+  async function shareReport() {
+    let blob, name, type;
+    try { blob = await reportPdfBlob(); name = reportFileBase() + '.pdf'; type = 'application/pdf'; }
+    catch (e) { blob = await reportImageBlob(); name = reportFileBase() + '.jpg'; type = 'image/jpeg'; }
+    let file = null; try { file = new File([blob], name, { type }); } catch (e) {}
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'H.O.W 피부 분석 리포트' }); return; }
+      catch (e) { if (e.name === 'AbortError') return; }
+    }
+    download(blob, name); toast(type === 'application/pdf' ? '공유를 지원하지 않아 PDF로 저장했어요' : '리포트 이미지를 저장했어요');
+  }
+  $('#btn-report').onclick = openReport;
+  $('#btn-face-report').onclick = openReport;
+  $('#btn-rep-back').onclick = () => { if (current) show(current.mode === 'face' ? 'face' : 'result'); else show('intro'); };
+  $('#btn-rep-pdf').onclick = () => reportAction('#btn-rep-pdf', 'PDF 만드는 중…', saveReportPdf);
+  $('#btn-rep-img').onclick = () => reportAction('#btn-rep-img', '이미지 만드는 중…', saveReportImage);
+  $('#btn-rep-share').onclick = () => reportAction('#btn-rep-share', '준비 중…', shareReport);
+  $('#rep-name').addEventListener('input', (e) => {
+    reportName = e.target.value.slice(0, 20); reportPages = null;
+    clearTimeout(reportTimer); reportTimer = setTimeout(() => { if (current) buildReport().catch(() => {}); }, 450);
+  });
 
   // ---------- 이벤트 ----------
   $('#btn-start').onclick = () => { exitFaceMode(); startCamera(); };
@@ -887,7 +925,6 @@
       if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.filter((k) => k.indexOf('how-face-') !== 0).map((k) => caches.delete(k))); }
     } catch (e) {}
     stopCamera();
-    // 측정 기록(localStorage)은 유지
     const u = new URL(location.href); u.searchParams.set('r', Date.now().toString(36)); u.hash = '';
     location.replace(u.toString());
   }
@@ -920,12 +957,9 @@
   $('#btn-res-home').onclick = () => show('intro');
   $('#btn-retry').onclick = () => { exitFaceMode(); startCamera(); };
   $('#btn-invalid-retry').onclick = () => { exitFaceMode(); startCamera(); };
-  $('#btn-save').onclick = saveCurrent;
+  $('#btn-next').onclick = nextCustomer;
   $('#btn-share').onclick = shareResult;
   $('#viz-tabs').onclick = (e) => { const m = e.target.dataset && e.target.dataset.mode; if (m) setViz(m); };
-  $('#btn-history').onclick = () => { show('history'); renderHistory(null, '#trend-canvas2', '#history-list2', loadHistory()); };
-  $('#btn-hist-home').onclick = () => show('intro');
-  $('#btn-clear').onclick = () => { if (confirm('모든 측정 기록을 삭제할까요?')) { localStorage.removeItem(HKEY); renderHistory(null, '#trend-canvas2', '#history-list2', []); toast('기록을 삭제했어요'); } };
   window.addEventListener('resize', () => stream && layoutGuide());
   document.addEventListener('visibilitychange', () => { if (document.hidden && stream) stopCamera(), show('intro'); });
 
@@ -933,9 +967,13 @@
   window.__skinTest = {
     recs: () => current && { care: current.care, makeup: current.makeup, tone: current.tone, season: currentSeason() },
     async analyzeUrl(url, fast = true) { const im = await loadImage(url); const r = await runAnalysis(await fromImage(im), fast); return { scores: r.scores, raw: r.raw, warnings: r.warnings, pores: r.viz.pores.length }; },
-    save: saveCurrent,
     faceSupported: () => faceSupported(),
+    openReport: () => openReport(),
+    reportPdfBase64: async () => { if (!reportPages) await buildReport(); const b = await reportPdfBlob(); return new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(b); }); },
+    reportImageBase64: async () => { if (!reportPages) await buildReport(); const b = await reportImageBlob(); return new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(b); }); },
+    reportPages: () => reportPages && reportPages.length,
+    state: () => ({ current: !!current, season: seasonChoice, name: reportName, ls: (() => { try { return Object.keys(localStorage); } catch (e) { return []; } })() }),
+    setSeason: (v) => { setSeasonChoice(v); },
     async faceUrl(url) { const im = await loadImage(url); await runFace(fromFaceImage(im), true); const f = current.face; return f.invalid ? { invalid: true, blockers: f.blockers } : { type: f.type, summary: f.summary, t: f.tShine, u: f.uShine, compact: window.HowFaceAnalyze.compact(f), care: current.care.priorityName, finish: current.makeup.finish, season: current.tone.season }; },
-    faceSave: () => saveFace(),
   };
 })();

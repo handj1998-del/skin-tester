@@ -25,17 +25,17 @@
 <link rel="canonical" href="https://handj1998-del.github.io/skin-tester/">
 <link rel="preload" href="fonts/cg300.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.2.0">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.3.0">
 <meta name="apple-mobile-web-app-title" content="피부결테스터">
 <meta name="application-name" content="피부결테스터">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="icon" type="image/svg+xml" href="icons/favicon.svg?v=1.2.0">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1.2.0">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg?v=1.3.0">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1.3.0">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="stylesheet" href="style.css?v=1.2.0">
+<link rel="stylesheet" href="style.css?v=1.3.0">
 </head>
 <body>
 <div id="app">
@@ -51,7 +51,7 @@
           <circle cx="150" cy="150" r="128" fill="none" stroke="#2b2523" stroke-opacity=".08" stroke-width="1" stroke-dasharray="1 5"/>
           <path d="M150 4 A146 146 0 0 1 253.2 46.8" fill="none" stroke="#a9796d" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-          <img src="logo.svg?v=1.2.0" alt="H.O.W" class="hero-logo" width="200" height="51">
+          <img src="logo.svg?v=1.3.0" alt="H.O.W" class="hero-logo" width="200" height="51">
         </div>
         <h1>피부결 테스터</h1>
         <p class="sub">폰 카메라로 매끄러움 · 모공 · 잔주름을 분석해요</p>
@@ -84,17 +84,14 @@
       </ul>
     </div>
     </div>
-    <div class="actions">
-      <button class="btn text" id="btn-history">지난 측정 기록 보기</button>
-    </div>
     <p class="privacy">H.O.W는 사진을 받지 않아요. 사진은 서버로 전송되지 않고 내 폰 안에서만 분석돼요</p>
     <details class="privacy-detail" id="privacy-intro">
       <summary>개인정보 · 이용 안내</summary>
       <div class="privacy-body">
         <p><b>사진 처리</b> — 촬영하거나 선택한 사진은 이 기기의 브라우저 안에서만 분석되며, 어떤 서버로도 업로드·전송·저장되지 않아요. 분석이 끝나면 원본 사진은 화면을 닫을 때 사라져요.</p>
-        <p><b>측정 기록</b> — ‘기록 저장하기’를 누른 경우에만 점수와 작은 썸네일이 <b>이 휴대폰의 브라우저 저장소</b>에 저장돼요. 다른 기기와 동기화되지 않고, H.O.W도 볼 수 없어요. ‘지난 측정 기록 보기 → 기록 전체 삭제’ 또는 브라우저 사이트 데이터 삭제로 언제든 지울 수 있어요.</p>
-        <p><b>얼굴 전체 분석</b> — 이 모드를 고르면 얼굴 인식 분석 도구(약 7MB, MediaPipe)를 이 휴대폰에 한 번 내려받아 <b>기기 안에서 실행</b>해요. 사진과 얼굴 정보는 서버로 전송되지 않으며, 기록에는 사진 없이 구역별 숫자만 저장돼요.</p>
-        <p><b>공유</b> — ‘결과 이미지 공유’는 직접 선택한 앱으로만 이미지가 전달돼요.</p>
+        <p><b>저장하지 않아요</b> — 매장 등 여러 사람이 함께 쓰는 기기를 고려해 <b>측정 결과·사진·이름을 이 기기에 저장하지 않아요.</b> 결과 화면을 벗어나거나 ‘처음으로 · 다음 고객’을 누르면 모두 지워지고, 매 측정은 이전 측정과 비교하지 않는 독립 분석이에요.</p>
+        <p><b>얼굴 전체 분석</b> — 이 모드를 고르면 얼굴 인식 분석 도구(약 7MB, MediaPipe)를 이 휴대폰에 한 번 내려받아 <b>기기 안에서 실행</b>해요. 사진과 얼굴 정보는 서버로 전송되지 않고 결과도 저장되지 않아요.</p>
+        <p><b>공유 · 리포트</b> — ‘결과 이미지 공유’와 ‘전체 결과 리포트’(PDF·이미지)는 이 기기 안에서 만들어지며, 직접 선택한 앱이나 이 기기의 다운로드 폴더로만 전달돼요. 리포트의 이름 입력은 선택 사항이고 저장되지 않아요.</p>
         <p><b>카메라 권한</b> — 측정 중에만 카메라를 사용하며, 화면을 벗어나면 즉시 꺼져요.</p>
         <p><b>유의사항</b> — 본 서비스는 피부결 경향을 보여주는 참고용 도구이며 의료기기나 의학적 진단이 아니에요. 피부 질환이 의심되면 전문의와 상담하세요.</p>
       </div>
@@ -145,12 +142,11 @@
 
   <!-- 4. 결과 -->
   <section id="screen-result" class="screen">
-    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.2.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>분석 결과</em></span><span class="date" id="res-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.3.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>분석 결과</em></span><span class="date" id="res-date"></span></header>
     <div class="card score-card needs-valid">
       <div class="ring" id="ring" role="img" aria-label="피부결 점수"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="ring-bar"/></svg>
         <div class="ring-text"><b id="res-overall">0</b><small>피부결 점수</small></div></div>
       <div class="grade"><span class="grade-badge" id="res-grade">A</span><b id="res-grade-label">우수</b><p id="res-grade-desc"></p></div>
-      <div class="delta" id="res-delta" hidden></div>
     </div>
     <div class="card warn" id="res-warn" hidden></div>
     <div class="card invalid-card only-invalid" role="alert">
@@ -184,26 +180,22 @@
       <div class="rec-panel" id="panel-makeup" role="tabpanel" aria-labelledby="tab-makeup" hidden></div>
       <div class="rec-panel" id="panel-color" role="tabpanel" aria-labelledby="tab-color" hidden></div>
     </div>
-    <div class="card needs-valid" id="history-card" hidden>
-      <h3><span class="kicker">Progress</span>피부결 변화</h3>
-      <canvas id="trend-canvas" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas>
-      <div id="history-list" class="history-list"></div>
-    </div>
     <div class="actions sticky needs-valid">
-      <button class="btn primary" id="btn-save">기록 저장하기</button>
+      <button class="btn primary" id="btn-report">전체 결과 리포트</button>
       <div class="row">
         <button class="btn ghost" id="btn-share">결과 이미지 공유</button>
         <button class="btn ghost" id="btn-retry">다시 측정</button>
       </div>
+      <button class="btn text next-customer" id="btn-next">처음으로 · 다음 고객</button>
     </div>
-    <details class="privacy-detail"><summary>개인정보 · 이용 안내</summary><div class="privacy-body"><p>H.O.W는 사진을 수집하지 않아요. 사진은 이 기기 안에서만 분석되며 서버로 전송·저장되지 않아요. 측정 기록은 ‘기록 저장하기’를 누른 경우에만 이 휴대폰의 브라우저 저장소에 저장되고, 언제든 삭제할 수 있어요. 얼굴 전체 분석 도구도 이 기기에 내려받아 기기 안에서만 실행돼요.</p></div></details>
+    <details class="privacy-detail"><summary>개인정보 · 이용 안내</summary><div class="privacy-body"><p>H.O.W는 사진을 수집하지 않아요. 사진은 이 기기 안에서만 분석되며 서버로 전송·저장되지 않아요. 측정 결과도 이 기기에 저장하지 않으며, 결과 화면을 벗어나거나 ‘처음으로 · 다음 고객’을 누르면 바로 지워져요. 얼굴 전체 분석 도구도 이 기기에 내려받아 기기 안에서만 실행돼요.</p></div></details>
     <p class="disclaimer">본 결과는 피부결의 상대적 경향을 보여주는 참고용 정보이며 <b>의학적 진단이 아닙니다.</b> 조명·거리·초점·카메라 기종에 따라 결과가 달라질 수 있으니, 변화를 비교할 때는 같은 장소·같은 조건에서 촬영해 주세요. 피부 질환이 의심되면 전문의와 상담하세요.</p>
     <footer class="app-foot"><button type="button" class="ver-label js-ver" aria-label="버전 정보, 눌러서 업데이트 확인">H.O.W 피부결 테스터 · <span class="js-ver-text">v</span></button></footer>
   </section>
 
   <!-- 6. 얼굴 전체 분석 안내 -->
   <section id="screen-face-intro" class="screen" aria-label="얼굴 전체 분석">
-    <header class="topbar"><button class="icon-btn plain" id="btn-fi-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.2.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 전체 분석</em></span><span class="date">Beta</span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-fi-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.3.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 전체 분석</em></span><span class="date">Beta</span></header>
     <div class="card face-intro">
       <svg class="fi-mark" viewBox="0 0 120 140" aria-hidden="true"><ellipse cx="60" cy="70" rx="44" ry="58" fill="none" stroke="#2b2523" stroke-opacity=".35" stroke-width="1.2"/><path d="M40 46h40M56 92h8" stroke="#a9796d" stroke-width="1.2" stroke-linecap="round"/><circle cx="38" cy="78" r="9" fill="#a9796d" fill-opacity=".18"/><circle cx="82" cy="78" r="9" fill="#a9796d" fill-opacity=".18"/><path d="M60 52v26" stroke="#c4a050" stroke-opacity=".6" stroke-width="6" stroke-linecap="round"/></svg>
       <h2>얼굴 전체 분석</h2>
@@ -229,7 +221,7 @@
 
   <!-- 7. 얼굴 전체 분석 결과 -->
   <section id="screen-face" class="screen" aria-label="얼굴 분석 결과">
-    <header class="topbar"><button class="icon-btn plain" id="btn-face-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.2.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 분석</em></span><span class="date" id="face-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-face-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.3.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 분석</em></span><span class="date" id="face-date"></span></header>
     <div class="card invalid-card face-invalid" id="face-invalid" role="alert" hidden>
       <canvas id="face-invalid-thumb" width="240" height="240" aria-hidden="true"></canvas>
       <h2>다시 찍어 주세요</h2>
@@ -243,7 +235,6 @@
         <b class="face-type" id="face-type"></b>
         <p class="face-sum" id="face-summary"></p>
         <div class="tu" id="face-tu"></div>
-        <div class="delta" id="face-delta" hidden></div>
       </div>
       <div class="card warn" id="face-warn" hidden></div>
       <div class="card">
@@ -259,25 +250,37 @@
       </div>
       <div id="face-rec-slot"></div>
       <div class="actions sticky">
-        <button class="btn primary" id="btn-face-save">기록 저장하기</button>
+        <button class="btn primary" id="btn-face-report">전체 결과 리포트</button>
         <div class="row">
           <button class="btn ghost" id="btn-face-share">결과 이미지 공유</button>
           <button class="btn ghost" id="btn-face-again">다시 측정</button>
         </div>
+        <button class="btn text next-customer" id="btn-face-next">처음으로 · 다음 고객</button>
       </div>
       <p class="disclaimer">얼굴 분석은 <b>같은 사진 안에서 구역끼리 비교한 상대값</b>이에요. 조명 방향·화이트밸런스·메이크업·카메라 기종에 따라 크게 달라지며 <b>의학적 진단이 아닙니다.</b> 변화를 비교할 때는 같은 장소·같은 조명에서 찍어 주세요. 피부 질환이 의심되면 전문의와 상담하세요.</p>
     </div>
-    <details class="privacy-detail"><summary>개인정보 · 이용 안내</summary><div class="privacy-body"><p>얼굴 인식 분석 도구는 이 휴대폰에 내려받아 기기 안에서만 실행돼요. 사진과 얼굴 정보는 서버로 전송·저장되지 않으며, 기록에는 사진 없이 구역별 숫자만 저장돼요.</p></div></details>
+    <details class="privacy-detail"><summary>개인정보 · 이용 안내</summary><div class="privacy-body"><p>얼굴 인식 분석 도구는 이 휴대폰에 내려받아 기기 안에서만 실행돼요. 사진과 얼굴 정보는 서버로 전송되지 않고, 결과는 이 기기에 저장되지 않아요. 결과 화면을 벗어나면 바로 지워져요.</p></div></details>
     <footer class="app-foot"><button type="button" class="ver-label js-ver" aria-label="버전 정보, 눌러서 업데이트 확인">H.O.W 피부결 테스터 · <span class="js-ver-text">v</span></button></footer>
   </section>
 
-  <!-- 5. 기록 -->
-  <section id="screen-history" class="screen">
-    <header class="topbar"><button class="icon-btn plain" id="btn-hist-home" aria-label="뒤로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.2.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>측정 기록</em></span><span class="date"></span></header>
-    <div class="card"><h3>피부결 점수 추이</h3><canvas id="trend-canvas2" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas></div>
-    <div class="card"><div id="history-list2" class="history-list"></div></div>
-    <div class="actions"><button class="btn text" id="btn-clear">기록 전체 삭제</button></div>
-    <footer class="app-foot"><button type="button" class="ver-label js-ver" aria-label="버전 정보, 눌러서 업데이트 확인">H.O.W 피부결 테스터 · <span class="js-ver-text">v</span></button></footer>
+  <!-- 5. 전체 결과 리포트 -->
+  <section id="screen-report" class="screen" aria-label="전체 결과 리포트">
+    <header class="topbar"><button class="icon-btn plain" id="btn-rep-back" aria-label="결과로 돌아가기">‹</button><span class="topbar-title"><img src="logo.svg?v=1.3.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>전체 결과 리포트</em></span><span class="date" id="rep-date"></span></header>
+    <div class="card rep-form">
+      <label for="rep-name">이름(선택)</label>
+      <input id="rep-name" type="text" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="리포트에 표시할 이름">
+      <p class="small">이름은 리포트에만 들어가며 이 기기에 저장되지 않아요.</p>
+    </div>
+    <div class="actions rep-actions">
+      <button class="btn primary" id="btn-rep-pdf">PDF로 저장</button>
+      <div class="row">
+        <button class="btn ghost" id="btn-rep-img">이미지로 저장</button>
+        <button class="btn ghost" id="btn-rep-share">공유하기</button>
+      </div>
+    </div>
+    <p class="rep-status" id="rep-status" role="status" aria-live="polite">리포트를 만드는 중…</p>
+    <div class="rep-preview" id="rep-preview" aria-label="리포트 미리보기"></div>
+    <p class="disclaimer">리포트는 이 기기 안에서 만들어지며 서버로 전송되지 않아요. 참고용 결과이며 <b>의학적 진단이 아닙니다.</b></p>
   </section>
 
 </main>
@@ -285,8 +288,8 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=1.2.0"></script>
-<script src="recommend.js?v=1.2.0"></script>
-<script src="app.js?v=1.2.0"></script>
+<script src="analyze.js?v=1.3.0"></script>
+<script src="recommend.js?v=1.3.0"></script>
+<script src="app.js?v=1.3.0"></script>
 </body>
 </html>

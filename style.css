@@ -467,3 +467,14 @@ ul.rec-list li::before{content:'';position:absolute;left:0;top:.75em;width:6px;h
 .h-item .sc.sm{font-size:12.5px;font-weight:600;letter-spacing:.04em;font-family:inherit;color:var(--rose-d)}
 .no-flexgap .tu-row>*+*{margin-left:0}
 .fi-unsup p{margin:0}
+/* v1.3.0 전체 결과 리포트 · 다음 고객 */
+.next-customer{border-top:1px solid var(--line);border-radius:0;margin-top:2px;padding-top:14px;color:var(--ink)}
+.rep-form{display:block}
+.rep-form label{display:block;font-size:13px;font-weight:600;color:var(--ink);letter-spacing:.02em;margin-bottom:8px}
+.rep-form input{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:2px;padding:12px 14px;-webkit-appearance:none;appearance:none}
+.rep-form input:focus{outline:none;border-color:var(--ink)}
+.rep-form .small{font-size:12.5px;color:var(--sub);margin:8px 0 0}
+.rep-status{font-size:13px;color:var(--sub);text-align:center;margin:14px 0 10px}
+.rep-preview{display:flex;flex-direction:column;align-items:stretch}
+.rep-preview .rep-page{display:block;width:100%;height:auto;background:#fff;box-shadow:0 1px 2px rgba(43,37,35,.08),0 6px 18px rgba(43,37,35,.07);margin:0 0 14px}
+.rep-actions{margin:14px 0 4px}
