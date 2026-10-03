@@ -1,0 +1,17 @@
+{
+  "name": "피부결 테스터",
+  "short_name": "피부결 테스터",
+  "description": "내 폰 카메라로 피부결(매끄러움·모공·잔주름)을 분석하는 셀프 테스터. 사진은 기기 안에서만 분석됩니다.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f8f1ec",
+  "theme_color": "#f8f1ec",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

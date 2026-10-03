@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache">
+<meta name="theme-color" content="#f8f1ec">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>피부결 테스터 · 내 폰으로 1분 피부결 분석</title>
+<meta name="description" content="스마트폰 카메라로 피부를 가까이 찍으면 매끄러움·모공·잔주름을 분석해 드려요. 사진은 서버로 전송되지 않고 내 폰 안에서만 분석됩니다.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SKIN TEXTURE LAB">
+<meta property="og:title" content="피부결 테스터 · 내 폰으로 1분 피부결 분석">
+<meta property="og:description" content="카메라로 찍으면 매끄러움·모공·잔주름 점수를 바로! 사진은 폰 밖으로 나가지 않아요.">
+<meta property="og:url" content="https://handj1998-del.github.io/skin-tester/">
+<meta property="og:image" content="https://handj1998-del.github.io/skin-tester/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="피부결 테스터 - 내 폰 카메라로 1분 만에 피부결 분석">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="피부결 테스터">
+<meta name="twitter:description" content="내 폰 카메라로 1분 만에 매끄러움·모공·잔주름 분석">
+<meta name="twitter:image" content="https://handj1998-del.github.io/skin-tester/og-image.png">
+<link rel="canonical" href="https://handj1998-del.github.io/skin-tester/">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="피부결 테스터">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="style.css?v=4">
+</head>
+<body>
+<div id="app">
+
+  <!-- 1. 인트로 -->
+  <main><section id="screen-intro" class="screen active" aria-label="시작">
+    <header class="brand"><span class="logo" aria-hidden="true">◐</span> SKIN TEXTURE LAB</header>
+    <div class="inapp-banner" id="inapp-banner" hidden>
+      <b>⚠️ <span id="inapp-name"></span> 안에서 열었어요</b>
+      <p>앱 내 브라우저에서는 실시간 카메라가 동작하지 않을 수 있어요. <span id="inapp-browser">Chrome</span>으로 열면 더 정확하게 측정할 수 있어요.</p>
+      <div class="row"><a class="btn small primary" id="btn-open-external" href="#">Chrome으로 열기</a><button class="btn small ghost" id="btn-copy-link">링크 복사</button></div>
+    </div>
+    <div class="hero">
+      <div class="hero-orb" aria-hidden="true"><div class="orb-inner"></div></div>
+      <p class="eyebrow">내 폰으로 1분 만에</p>
+      <h1>피부결 테스터</h1>
+      <p class="sub">카메라로 피부를 가까이 찍으면<br>매끄러움 · 모공 · 잔주름을 분석해 드려요</p>
+    </div>
+    <div class="card guide">
+      <h2>정확한 측정을 위한 촬영 가이드</h2>
+      <ul class="guide-list">
+        <li><span class="ic" aria-hidden="true">☀️</span><div><b>밝고 고른 빛</b><small>창가 자연광 또는 밝은 실내조명. 그림자가 지지 않게</small></div></li>
+        <li><span class="ic" aria-hidden="true">⚡</span><div><b>플래시는 끄기</b><small>쓴다면 매번 같은 조건으로 촬영하세요</small></div></li>
+        <li><span class="ic" aria-hidden="true">📏</span><div><b>약 10cm 거리</b><small>초점이 선명하게 맞는 가장 가까운 거리</small></div></li>
+        <li><span class="ic" aria-hidden="true">🙂</span><div><b>볼 또는 이마</b><small>가이드 사각형 안에 피부만 가득 차게</small></div></li>
+        <li><span class="ic" aria-hidden="true">🧴</span><div><b>메이크업 없이</b><small>세안 후 맨얼굴, 유분은 가볍게 정돈</small></div></li>
+      </ul>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btn-start">카메라로 측정하기</button>
+      <label class="btn ghost" for="file-input">📷 기본 카메라 앱으로 촬영하기</label>
+      <input type="file" id="file-input" class="vh" aria-label="기본 카메라 앱으로 촬영하기" accept="image/*" capture="environment">
+      <label class="btn text" for="file-input3">앨범에서 사진 선택하기</label>
+      <input type="file" id="file-input3" class="vh" aria-label="앨범에서 사진 선택하기" accept="image/*">
+      <button class="btn text" id="btn-history">지난 측정 기록 보기</button>
+    </div>
+    <p class="privacy">🔒 사진은 서버로 전송되지 않고 내 폰 안에서만 분석돼요</p>
+    <details class="privacy-detail" id="privacy-intro">
+      <summary>개인정보 · 이용 안내</summary>
+      <div class="privacy-body">
+        <p><b>사진 처리</b> — 촬영하거나 선택한 사진은 이 기기의 브라우저 안에서만 분석되며, 어떤 서버로도 업로드·전송·저장되지 않아요. 분석이 끝나면 원본 사진은 화면을 닫을 때 사라져요.</p>
+        <p><b>측정 기록</b> — ‘기록 저장하기’를 누른 경우에만 점수와 작은 썸네일이 <b>이 휴대폰의 브라우저 저장소</b>에 저장돼요. 다른 기기와 동기화되지 않고, 저희도 볼 수 없어요. ‘지난 측정 기록 보기 → 기록 전체 삭제’ 또는 브라우저 사이트 데이터 삭제로 언제든 지울 수 있어요.</p>
+        <p><b>공유</b> — ‘결과 이미지 공유’는 직접 선택한 앱으로만 이미지가 전달돼요.</p>
+        <p><b>카메라 권한</b> — 측정 중에만 카메라를 사용하며, 화면을 벗어나면 즉시 꺼져요.</p>
+        <p><b>유의사항</b> — 본 서비스는 피부결 경향을 보여주는 참고용 도구이며 의료기기나 의학적 진단이 아니에요. 피부 질환이 의심되면 전문의와 상담하세요.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 2. 카메라 -->
+  <section id="screen-camera" class="screen dark">
+    <div class="cam-wrap" id="cam-wrap">
+      <video id="video" aria-label="카메라 미리보기" playsinline webkit-playsinline muted autoplay></video>
+      <button class="tap-to-play" id="tap-to-play" hidden>▶︎ 화면을 눌러 카메라 시작</button>
+      <div class="cam-mask" id="cam-mask" aria-hidden="true"><div class="cam-guide" id="cam-guide"><i></i><i></i><i></i><i></i><span id="guide-tip">볼 또는 이마를 사각형 안에</span></div></div>
+      <div class="cam-top">
+        <button class="icon-btn" id="btn-cam-close" aria-label="닫기">✕</button>
+        <div class="light-meter" id="light-meter"><span class="dot"></span><span id="light-text">밝기 확인 중</span></div>
+        <button class="icon-btn" id="btn-torch" aria-label="조명" hidden>💡</button>
+      </div>
+      <div class="cam-bottom">
+        <label class="icon-btn small" for="file-input2" aria-label="앨범">🖼</label>
+        <input type="file" id="file-input2" class="vh" aria-label="앨범에서 사진 선택하기" accept="image/*">
+        <button class="shutter" id="btn-shutter" aria-label="촬영"><span></span></button>
+        <button class="icon-btn small" id="btn-flip" aria-label="카메라 전환">🔄</button>
+      </div>
+      <p class="cam-hint">약 10cm 거리에서 초점이 맞으면 촬영하세요</p>
+      <div class="cam-error" id="cam-error" hidden>
+        <div class="cam-error-icon">📷</div>
+        <h2 id="cam-error-title">카메라를 사용할 수 없어요</h2>
+        <div id="cam-error-text" class="cam-error-text"></div>
+        <label class="btn primary" for="file-input">📷 기본 카메라 앱으로 촬영하기</label>
+        <a class="btn ghost" id="cam-error-external" href="#" hidden>Chrome으로 열기</a>
+        <button class="btn ghost dark" id="btn-cam-retry">다시 시도</button>
+        <button class="btn text light" id="btn-cam-back">처음으로</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. 분석 중 -->
+  <section id="screen-analyzing" class="screen">
+    <div class="analyzing">
+      <div class="scan-box"><canvas id="scan-canvas" width="360" height="360" aria-hidden="true"></canvas><div class="scan-line"></div></div>
+      <h2>피부결을 분석하고 있어요</h2>
+      <p id="analyze-step" role="status" aria-live="polite">조명 보정 중…</p>
+    </div>
+  </section>
+
+  <!-- 4. 결과 -->
+  <section id="screen-result" class="screen">
+    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span>분석 결과</span><span class="date" id="res-date"></span></header>
+    <div class="card score-card">
+      <div class="ring" id="ring" role="img" aria-label="피부결 점수"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="ring-bar"/></svg>
+        <div class="ring-text"><b id="res-overall">0</b><small>피부결 점수</small></div></div>
+      <div class="grade"><span class="grade-badge" id="res-grade">A</span><b id="res-grade-label">우수</b><p id="res-grade-desc"></p></div>
+      <div class="delta" id="res-delta" hidden></div>
+    </div>
+    <div class="card warn" id="res-warn" hidden></div>
+    <div class="card">
+      <h3>항목별 점수</h3>
+      <div class="metrics" id="metrics"></div>
+    </div>
+    <div class="card">
+      <h3>분석 영역 시각화</h3>
+      <div class="viz-tabs" id="viz-tabs" role="group" aria-label="시각화 종류 선택">
+        <button data-mode="heat" class="on">거칠기 맵</button><button data-mode="pores">모공</button><button data-mode="lines">잔주름</button><button data-mode="original">원본</button>
+      </div>
+      <canvas id="viz-canvas" width="720" height="720" role="img" aria-label="분석 영역 시각화 이미지"></canvas>
+      <p class="viz-legend" id="viz-legend"></p>
+    </div>
+    <div class="card">
+      <h3>맞춤 케어 팁</h3>
+      <div id="tips"></div>
+    </div>
+    <div class="card" id="history-card" hidden>
+      <h3>피부결 변화</h3>
+      <canvas id="trend-canvas" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas>
+      <div id="history-list" class="history-list"></div>
+    </div>
+    <div class="actions sticky">
+      <button class="btn primary" id="btn-save">기록 저장하기</button>
+      <div class="row">
+        <button class="btn ghost" id="btn-share">결과 이미지 공유</button>
+        <button class="btn ghost" id="btn-retry">다시 측정</button>
+      </div>
+    </div>
+    <details class="privacy-detail"><summary>개인정보 · 이용 안내</summary><div class="privacy-body"><p>사진은 이 기기 안에서만 분석되며 서버로 전송·저장되지 않아요. 측정 기록은 ‘기록 저장하기’를 누른 경우에만 이 휴대폰의 브라우저 저장소에 저장되고, 언제든 삭제할 수 있어요.</p></div></details>
+    <p class="disclaimer">본 결과는 피부결의 상대적 경향을 보여주는 참고용 정보이며 <b>의학적 진단이 아닙니다.</b> 조명·거리·초점·카메라 기종에 따라 결과가 달라질 수 있으니, 변화를 비교할 때는 같은 장소·같은 조건에서 촬영해 주세요. 피부 질환이 의심되면 전문의와 상담하세요.</p>
+  </section>
+
+  <!-- 5. 기록 -->
+  <section id="screen-history" class="screen">
+    <header class="topbar"><button class="icon-btn plain" id="btn-hist-home" aria-label="뒤로">‹</button><span>측정 기록</span><span></span></header>
+    <div class="card"><h3>피부결 점수 추이</h3><canvas id="trend-canvas2" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas></div>
+    <div class="card"><div id="history-list2" class="history-list"></div></div>
+    <div class="actions"><button class="btn text" id="btn-clear">기록 전체 삭제</button></div>
+  </section>
+
+</main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</div>
+<canvas id="work-canvas" width="360" height="360" hidden></canvas>
+<script src="analyze.js?v=4"></script>
+<script src="app.js?v=4"></script>
+</body>
+</html>
