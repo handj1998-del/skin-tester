@@ -1,9 +1,10 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.1.2';
+  const APP_VERSION = '1.1.3';
   const BUILD_DATE = '2026-10-03';
   window.APP_VERSION = APP_VERSION;
+  (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
   const $ = (s) => document.querySelector(s);
   const SA = window.SkinAnalyzer;
   const HKEY = 'skinTexture.history.v1';
@@ -525,7 +526,9 @@
   async function shareResult() {
     if (!current || sharing || current.result.invalid) return;
     sharing = true;
-    try { await doShare(); } finally { setTimeout(() => (sharing = false), 600); }
+    const sb = $('#btn-share'); const label = sb.textContent;
+    sb.setAttribute('aria-busy', 'true'); sb.textContent = '이미지 만드는 중…';
+    try { await doShare(); } finally { sb.textContent = label; sb.removeAttribute('aria-busy'); setTimeout(() => (sharing = false), 600); }
   }
   async function doShare() {
     try { await Promise.all([document.fonts.load('300 220px "Cormorant Garamond"'), document.fonts.load('400 28px "Cormorant Garamond"')]); } catch (e) {}
