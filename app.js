@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.0.9';
+  const APP_VERSION = '1.1.0';
   const BUILD_DATE = '2026-10-03';
   window.APP_VERSION = APP_VERSION;
   const $ = (s) => document.querySelector(s);
@@ -320,7 +320,7 @@
     // 팁: 점수가 낮은 순
     const weak = METRICS.filter((m) => s[m.key] < 72).sort((a, b) => s[a.key] - s[b.key]);
     const tipKeys = weak.length ? weak.map((m) => m.key) : ['good'];
-    $('#tips').innerHTML = tipKeys.map((k, i) => `<div class="tip"><span class="num" aria-hidden="true">${k === 'good' ? '—' : String(i + 1).padStart(2, '0')}</span><div><b>${TIPS[k].t}</b><p>${TIPS[k].p}</p></div></div>`).join('');
+    renderRecs();
     // 시각화
     setViz('heat');
     // 비교
@@ -336,6 +336,79 @@
     renderHistory('#history-card', '#trend-canvas', '#history-list', hist, s.overall);
     $('#btn-save').textContent = '기록 저장하기'; $('#btn-save').disabled = false;
   }
+  // ---------- 맞춤 추천 (케어 · 메이크업 · 컬러) ----------
+  const REC = window.HowRecommend;
+  const SKEY = 'how.season.v1';
+  let recTab = 'care';
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function getSeasonChoice() { try { return localStorage.getItem(SKEY) || 'auto'; } catch (e) { return 'auto'; } }
+  function setSeasonChoice(v) { try { localStorage.setItem(SKEY, v); } catch (e) {} }
+  function currentSeason() {
+    const ch = getSeasonChoice();
+    return ch !== 'auto' && REC.SEASONS[ch] ? ch : current.tone.season;
+  }
+  function list(items, ordered) { const t = ordered ? 'ol' : 'ul'; return `<${t} class="rec-list">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</${t}>`; }
+  function swatches(arr, cls = '') { return `<div class="sw-row ${cls}">${arr.map(([n, hex]) => `<div class="sw"><span class="dot" style="background:${hex}" aria-hidden="true"></span><small>${esc(n)}</small></div>`).join('')}</div>`; }
+  function renderRecs() {
+    const r = current.result;
+    current.care = REC.buildCare(r.scores);
+    current.makeup = REC.buildMakeup(r.scores);
+    current.tone = REC.estimateTone(r.raw.rgb, r.warnings);
+    const c = current.care, m = current.makeup;
+    $('#panel-care').innerHTML = `
+      <div class="rec-hero"><span class="rec-label">집중 영역</span><b>${esc(c.priorityName)}</b><p>${esc(c.headline)}</p></div>
+      <div class="rec-split">
+        <div><h4><span class="kicker">AM</span>아침</h4>${list(c.am, true)}</div>
+        <div><h4><span class="kicker">PM</span>저녁</h4>${list(c.pm, true)}</div>
+      </div>
+      <h4><span class="kicker">Ingredients</span>찾아볼 성분</h4>
+      <dl class="ing">${c.ingredients.map(([n, d]) => `<div><dt>${esc(n)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl>
+      <h4><span class="kicker">Weekly</span>주간 스페셜 케어</h4>${list(c.weekly)}
+      <h4><span class="kicker">Avoid</span>피하면 좋은 습관</h4>${list(c.avoid)}
+      <p class="rec-note">일반적인 화장품 사용 가이드예요. 자극·붉은기가 생기면 사용을 멈추고, 피부 질환이 의심되면 전문의와 상담하세요.</p>`;
+    $('#panel-makeup').innerHTML = `
+      <div class="rec-hero"><span class="rec-label">추천 베이스 마무리</span><b>${esc(m.finish)}</b><p>${esc(m.finishWhy)}</p></div>
+      <h4><span class="kicker">Primer</span>프라이머</h4><p class="rec-p">${esc(m.primer)}</p>
+      <h4><span class="kicker">How to</span>바르는 방법</h4>${list(m.tips, true)}
+      <p class="rec-note">결과에 따른 일반적인 연출 팁이에요. 피부 타입과 사용 제품에 맞게 조절해 주세요.</p>`;
+    renderColor();
+    selectRecTab(recTab, false);
+  }
+  function renderColor() {
+    const t = current.tone, choice = getSeasonChoice(), key = currentSeason(), S = REC.SEASONS[key], E = REC.SEASONS[t.season];
+    const skin = current.result.raw.rgb.map((v) => Math.round(v));
+    const conf = t.confidence === 'low' ? '낮음' : '보통';
+    const opts = [['auto', '모름 (추정 사용)'], ['spring', '봄 웜'], ['summer', '여름 쿨'], ['autumn', '가을 웜'], ['winter', '겨울 쿨']];
+    $('#panel-color').innerHTML = `
+      <div class="tone-est">
+        <span class="skin-dot" style="background:rgb(${skin.join(',')})" aria-hidden="true"></span>
+        <div><span class="rec-label">사진 기반 추정</span><b>${t.undertone === 'warm' ? '웜' : '쿨'} 톤 · ${esc(E.name)}</b>
+        <p>신뢰도 ${conf}${t.neutral ? ' · 뉴트럴에 가까워요' : ''}. 조명과 카메라 화이트밸런스의 영향을 크게 받는 참고값이에요. 알고 있는 퍼스널컬러가 있다면 아래에서 선택해 주세요.</p></div>
+      </div>
+      <div class="season-pick" role="radiogroup" aria-label="퍼스널컬러 선택">
+        ${opts.map(([v, n]) => `<button type="button" role="radio" aria-checked="${choice === v}" data-season="${v}" class="${choice === v ? 'on' : ''}">${n}</button>`).join('')}
+      </div>
+      <div class="season-head"><span class="kicker">${esc(S.en)}</span><b>${esc(S.name)}</b>${choice === 'auto' ? '<em>추정</em>' : '<em>선택</em>'}<p>${esc(S.desc)}</p></div>
+      <h4>파운데이션 언더톤</h4>${swatches(S.foundation, 'lg')}
+      <h4>립</h4>${swatches(S.lip)}
+      <h4>블러셔</h4>${swatches(S.blush)}
+      <h4>아이섀도</h4>${swatches(S.eye)}
+      <h4>피하면 좋은 컬러</h4>${swatches(S.avoid, 'avoid')}
+      <p class="rec-note">퍼스널컬러는 자연광에서 전문가 진단으로 확인하는 것이 가장 정확해요. 화면 색상은 기기에 따라 다르게 보일 수 있어요.</p>`;
+    $('#panel-color').querySelectorAll('[data-season]').forEach((b) => (b.onclick = () => { setSeasonChoice(b.dataset.season); renderColor(); const nb = $('#panel-color').querySelector(`[data-season="${b.dataset.season}"]`); if (nb) nb.focus(); }));
+  }
+  function selectRecTab(tab, focus) {
+    recTab = tab;
+    document.querySelectorAll('.rec-tabs [role=tab]').forEach((b) => { const on = b.dataset.tab === tab; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; b.classList.toggle('on', on); if (on && focus) b.focus(); });
+    ['care', 'makeup', 'color'].forEach((k) => ($('#panel-' + k).hidden = k !== tab));
+  }
+  document.querySelector('.rec-tabs').addEventListener('click', (e) => { const b = e.target.closest('[role=tab]'); if (b) selectRecTab(b.dataset.tab, false); });
+  document.querySelector('.rec-tabs').addEventListener('keydown', (e) => {
+    const order = ['care', 'makeup', 'color'], i = order.indexOf(recTab);
+    if (e.key === 'ArrowRight') { selectRecTab(order[(i + 1) % 3], true); e.preventDefault(); }
+    if (e.key === 'ArrowLeft') { selectRecTab(order[(i + 2) % 3], true); e.preventDefault(); }
+  });
+
   const LEGEND = {
     heat: '세이지색은 매끈한 부분, 샌드→테라코타로 갈수록 표면 요철이 많은 부분이에요.',
     pores: '원으로 표시된 부분이 모공으로 추정되는 어두운 점이에요. (진한 갈색: 더 뚜렷함)',
@@ -430,6 +503,11 @@
       x.fillStyle = 'rgba(43,37,35,.10)'; x.fillRect(120, y + 26, 840, 3);
       x.fillStyle = toneOf(v); x.fillRect(120, y + 26, Math.max(6, 840 * v / 100), 3);
     });
+    if (current.care && current.tone) {
+      const sn = REC.SEASONS[currentSeason()].name + (getSeasonChoice() === 'auto' ? ' (추정)' : '');
+      x.textAlign = 'center'; x.fillStyle = INK; x.font = `500 26px ${F}`;
+      x.fillText(`${sn}   ·   ${current.care.mode === 'maintain' ? '컨디션 유지 관리' : '집중 케어 ' + current.care.priorityName}`, W / 2, 1222);
+    }
     x.textAlign = 'center'; x.fillStyle = '#8b807a'; x.font = `400 22px ${F}`;
     x.fillText('의학적 진단이 아닌 참고용 결과이며, 조명·촬영 조건에 따라 달라질 수 있어요', W / 2, H - 92);
     return c;
@@ -549,6 +627,7 @@
 
   // 테스트용 훅 (자동 테스트에서만 사용)
   window.__skinTest = {
+    recs: () => current && { care: current.care, makeup: current.makeup, tone: current.tone, season: currentSeason() },
     async analyzeUrl(url, fast = true) { const im = await loadImage(url); const r = await runAnalysis(await fromImage(im), fast); return { scores: r.scores, raw: r.raw, warnings: r.warnings, pores: r.viz.pores.length }; },
     save: saveCurrent,
   };

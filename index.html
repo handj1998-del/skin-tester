@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="stylesheet" href="style.css?v=1.0.9">
+<link rel="stylesheet" href="style.css?v=1.1.0">
 </head>
 <body>
 <div id="app">
@@ -170,9 +170,16 @@
       <canvas id="viz-canvas" width="720" height="720" role="img" aria-label="분석 영역 시각화 이미지"></canvas>
       <p class="viz-legend" id="viz-legend"></p>
     </div>
-    <div class="card needs-valid">
-      <h3><span class="kicker">Care</span>맞춤 케어 팁</h3>
-      <div id="tips"></div>
+    <div class="card needs-valid rec-card" id="rec-card">
+      <h3><span class="kicker">For you</span>맞춤 추천</h3>
+      <div class="rec-tabs" role="tablist" aria-label="추천 종류">
+        <button type="button" role="tab" id="tab-care" data-tab="care" aria-controls="panel-care" aria-selected="true">케어</button>
+        <button type="button" role="tab" id="tab-makeup" data-tab="makeup" aria-controls="panel-makeup" aria-selected="false" tabindex="-1">메이크업</button>
+        <button type="button" role="tab" id="tab-color" data-tab="color" aria-controls="panel-color" aria-selected="false" tabindex="-1">컬러</button>
+      </div>
+      <div class="rec-panel" id="panel-care" role="tabpanel" aria-labelledby="tab-care"></div>
+      <div class="rec-panel" id="panel-makeup" role="tabpanel" aria-labelledby="tab-makeup" hidden></div>
+      <div class="rec-panel" id="panel-color" role="tabpanel" aria-labelledby="tab-color" hidden></div>
     </div>
     <div class="card needs-valid" id="history-card" hidden>
       <h3><span class="kicker">Progress</span>피부결 변화</h3>
@@ -205,7 +212,8 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=1.0.9"></script>
-<script src="app.js?v=1.0.9"></script>
+<script src="analyze.js?v=1.1.0"></script>
+<script src="recommend.js?v=1.1.0"></script>
+<script src="app.js?v=1.1.0"></script>
 </body>
 </html>
