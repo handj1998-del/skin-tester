@@ -71,7 +71,7 @@
   };
   Doc.prototype.gap = function (h) { this.y += h; };
   Doc.prototype.section = function (kicker, title, keep) {
-    this.ensure(110 + (keep || 160));
+    this.ensure(140 + (keep || 160)); // 제목 블록 실제 높이(134px) + 여유
     var x = this.x, y = this.y + 34;
     font(x, 600, 17); x.fillStyle = ACC; spaced(x, kicker.toUpperCase(), M, y, 4);
     font(x, 600, 34); x.fillStyle = INK; x.fillText(title, M, y + 48);
@@ -96,7 +96,9 @@
     o = o || {}; var self = this, size = 23, lh = 37, X = M + (o.indent || 0), maxW = (o.w || CW) - (o.indent || 0) - 44;
     items.forEach(function (it, i) {
       font(self.x, 400, size); var lines = wrap(self.x, it, maxW);
-      self.ensure(Math.min(lines.length, 2) * lh + 8);
+      var need = Math.min(lines.length, 2) * lh;
+      if (o.tail && i === items.length - 2) { font(self.x, 400, size); need = (lines.length + wrap(self.x, items[i + 1], maxW).length) * lh + 8 + o.tail; } // 마지막 두 항목 + 안내문을 함께
+      self.ensure(need + 8);
       var x = self.x;
       if (ordered) { font(x, 500, 24, SERIF); x.fillStyle = ACC; x.fillText(pad2(i + 1), X, self.y + size); }
       else { x.fillStyle = ACC; x.beginPath(); x.arc(X + 8, self.y + size - 8, 4, 0, 7); x.fill(); }
@@ -106,6 +108,12 @@
     this.y += 6;
   };
   // 두 칼럼 목록 (아침/저녁)
+  Doc.prototype.twoListsH = function (a, b) {
+    var x = this.x, colW = (CW - 40) / 2; font(x, 400, 22);
+    var hOf = function (col) { return 50 + col.items.reduce(function (s, it) { return s + wrap(x, it, colW - 92).length * 34 + 10; }, 0); };
+    return Math.max(hOf(a), hOf(b)) + 24 + 8;
+  };
+  Doc.prototype.calloutH = function (lines) { var x = this.x; font(x, 400, 22); var n = 0; lines.forEach(function (l) { n += wrap(x, l, CW - 64).length; }); return 64 + n * 34 + 18 + 18; };
   Doc.prototype.twoLists = function (a, b) {
     var x = this.x, colW = (CW - 40) / 2, size = 22, lh = 34, self = this;
     function lay(col) { font(x, 400, size); return col.items.map(function (it) { return wrap(x, it, colW - 66 - 26); }); }
@@ -240,17 +248,18 @@
   // ---------- 본문 ----------
   function careSections(doc) {
     var d = doc.d, c = d.care, m = d.makeup;
-    doc.section('Skin care', '맞춤 케어 루틴', 260);
+    var am = { kicker: 'AM', title: '아침', items: c.am }, pm = { kicker: 'PM', title: '저녁', items: c.pm };
+    doc.section('Skin care', '맞춤 케어 루틴', doc.calloutH([c.headline]) + doc.twoListsH(am, pm)); // 제목·요약·아침/저녁을 한 페이지에
     doc.callout('집중 영역 · ' + c.priorityName, [c.headline]);
-    doc.twoLists({ kicker: 'AM', title: '아침', items: c.am }, { kicker: 'PM', title: '저녁', items: c.pm });
+    doc.twoLists(am, pm);
     doc.sub('Ingredients', '찾아볼 성분'); doc.defs(c.ingredients);
     doc.sub('Weekly', '주간 스페셜 케어'); doc.list(c.weekly);
-    doc.sub('Avoid', '피하면 좋은 습관'); doc.list(c.avoid);
+    doc.sub('Avoid', '피하면 좋은 습관'); doc.list(c.avoid, false, { tail: 70 });
     doc.para('일반적인 화장품 사용 가이드예요. 자극·붉은기가 생기면 사용을 멈추고, 피부 질환이 의심되면 전문의와 상담하세요.', { size: 19, color: MUTE });
     doc.section('Makeup', '메이크업 가이드', 260);
     doc.callout('추천 베이스 마무리 · ' + m.finish, [m.finishWhy]);
     doc.sub('Primer', '프라이머'); doc.para(m.primer, { color: INK });
-    doc.sub('How to', '바르는 방법'); doc.list(m.tips, true);
+    doc.sub('How to', '바르는 방법'); doc.list(m.tips, true, { tail: 70 });
     doc.para('결과에 따른 일반적인 연출 팁이에요. 피부 타입과 사용 제품에 맞게 조절해 주세요.', { size: 19, color: MUTE });
   }
   function colorSection(doc) {

@@ -478,3 +478,30 @@ ul.rec-list li::before{content:'';position:absolute;left:0;top:.75em;width:6px;h
 .rep-preview{display:flex;flex-direction:column;align-items:stretch}
 .rep-preview .rep-page{display:block;width:100%;height:auto;background:#fff;box-shadow:0 1px 2px rgba(43,37,35,.08),0 6px 18px rgba(43,37,35,.07);margin:0 0 14px}
 .rep-actions{margin:14px 0 4px}
+/* v1.3.2 타이포·정렬 정리 */
+/* 상단바: 제목을 화면 정중앙에 (좌우 칸 동일 폭) */
+.topbar{display:grid;grid-template-columns:minmax(44px,1fr) auto minmax(44px,1fr);column-gap:8px}
+.topbar>:first-child{justify-self:start}
+.topbar>:last-child{justify-self:end;white-space:nowrap}
+.topbar-title{justify-self:center;min-width:0;white-space:nowrap}
+@media (max-width:400px){#rep-date{visibility:hidden}}
+/* 인트로 보조 링크: 단어 중간 줄바꿈 방지 */
+.intro-links{flex-wrap:nowrap;white-space:nowrap}
+.intro-links .guide-link,.intro-links .face-link{white-space:nowrap}
+@media (max-width:340px){.intro-links .guide-link,.intro-links .face-link{padding-left:6px;padding-right:6px;letter-spacing:.02em}.intro-links .sep{margin:0 2px}}
+/* 카메라 팁 칩: 좁은 화면에서도 한 줄 */
+@media (max-width:350px){.cam-tips{gap:4px;padding:0 8px;flex-wrap:nowrap}.cam-tips span{font-size:11px;letter-spacing:0;padding:4px 7px;white-space:nowrap}.no-flexgap .cam-tips>*{margin:2px}}
+/* 카메라 오류 안내: 제목·본문 가운데 정렬 통일, 목록만 왼쪽 */
+.cam-error{background:rgba(24,20,19,.97)}
+.cam-error-text{text-align:center}
+.cam-error-text ol{display:inline-block;text-align:left}
+/* 얼굴 요약 카드: 가운데 정렬 통일 */
+.face-summary h3{text-align:center}
+/* 구역 표: 라벨은 위, 값은 아래 기준선으로 정렬 */
+.zrow{align-items:stretch}
+.zc,.zt{display:flex;flex-direction:column}
+.zc em,.zt em{margin-top:auto}
+.zt em{line-height:18px;padding-top:4px}
+/* 한글 줄바꿈: 짧은 가운데 문구는 균형 있게, 본문은 외톨이 단어 방지 (지원 브라우저만) */
+h1,h2,.face-type,.face-sum,.grade p,.rec-hero b,.rec-hero p,.fi-status p,.cam-error h2,.invalid-card h2,.analyzing h2,.intro-sub,.season-head p{text-wrap:balance}
+p,li,dd,.small,.disclaimer,.rec-note,.viz-legend{text-wrap:pretty}
