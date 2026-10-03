@@ -31,8 +31,9 @@
 <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <div id="app">
@@ -124,18 +125,26 @@
   <!-- 4. 결과 -->
   <section id="screen-result" class="screen">
     <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span><img src="logo.svg" alt="H.O.W" class="topbar-logo" width="54" height="17"> 분석 결과</span><span class="date" id="res-date"></span></header>
-    <div class="card score-card">
+    <div class="card score-card needs-valid">
       <div class="ring" id="ring" role="img" aria-label="피부결 점수"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="ring-bar"/></svg>
         <div class="ring-text"><b id="res-overall">0</b><small>피부결 점수</small></div></div>
       <div class="grade"><span class="grade-badge" id="res-grade">A</span><b id="res-grade-label">우수</b><p id="res-grade-desc"></p></div>
       <div class="delta" id="res-delta" hidden></div>
     </div>
     <div class="card warn" id="res-warn" hidden></div>
-    <div class="card">
+    <div class="card invalid-card only-invalid" role="alert">
+      <canvas id="invalid-thumb" width="240" height="240" aria-hidden="true"></canvas>
+      <h2>측정할 수 없는 사진이에요</h2>
+      <ul id="invalid-reasons"></ul>
+      <p class="small">정확한 결과를 위해 점수를 표시하지 않았어요. 촬영 가이드를 확인하고 다시 찍어주세요.</p>
+      <button class="btn primary" id="btn-invalid-retry">다시 촬영하기</button>
+      <label class="btn ghost" for="file-input3">다른 사진 선택하기</label>
+    </div>
+    <div class="card needs-valid">
       <h3>항목별 점수</h3>
       <div class="metrics" id="metrics"></div>
     </div>
-    <div class="card">
+    <div class="card needs-valid">
       <h3>분석 영역 시각화</h3>
       <div class="viz-tabs" id="viz-tabs" role="group" aria-label="시각화 종류 선택">
         <button data-mode="heat" class="on">거칠기 맵</button><button data-mode="pores">모공</button><button data-mode="lines">잔주름</button><button data-mode="original">원본</button>
@@ -143,16 +152,16 @@
       <canvas id="viz-canvas" width="720" height="720" role="img" aria-label="분석 영역 시각화 이미지"></canvas>
       <p class="viz-legend" id="viz-legend"></p>
     </div>
-    <div class="card">
+    <div class="card needs-valid">
       <h3>맞춤 케어 팁</h3>
       <div id="tips"></div>
     </div>
-    <div class="card" id="history-card" hidden>
+    <div class="card needs-valid" id="history-card" hidden>
       <h3>피부결 변화</h3>
       <canvas id="trend-canvas" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas>
       <div id="history-list" class="history-list"></div>
     </div>
-    <div class="actions sticky">
+    <div class="actions sticky needs-valid">
       <button class="btn primary" id="btn-save">기록 저장하기</button>
       <div class="row">
         <button class="btn ghost" id="btn-share">결과 이미지 공유</button>
@@ -175,7 +184,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=5"></script>
-<script src="app.js?v=5"></script>
+<script src="analyze.js?v=6"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

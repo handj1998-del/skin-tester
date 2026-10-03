@@ -11,10 +11,15 @@
 
   // ---------- 화면 전환 ----------
   function show(id) {
+    try {
+      if (id !== 'intro' && !(history.state && history.state.app)) history.pushState({ app: 1 }, '');
+      else if (id === 'intro' && history.state && history.state.app && !show._pop) { show._expectPop = true; history.back(); }
+    } catch (e) {}
+    show._pop = false;
     document.querySelectorAll('.screen').forEach((s) => { const on = s.id === 'screen-' + id; s.classList.toggle('active', on); s.setAttribute('aria-hidden', on ? 'false' : 'true'); });
     window.scrollTo(0, 0);
     const h = document.querySelector('#screen-' + id + ' h1, #screen-' + id + ' h2, #screen-' + id + ' .topbar span');
-    if (h && id !== 'intro') { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) {} }
+    if (h && id !== 'intro' && h.offsetParent) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) {} }
   }
   function toast(msg) {
     const t = $('#toast'); t.textContent = msg; t.classList.add('show');
@@ -193,7 +198,9 @@
     $('#light-text').textContent = txt;
     $('#cam-guide').classList.toggle('ok', ok);
   }
+  let busy = false;
   function captureFromVideo() {
+    if (busy) return;
     const v = $('#video'); if (!v.videoWidth) return toast('카메라가 준비 중이에요');
     const r = guideRectInVideo();
     const c = makeWorkCanvas((ctx, N) => ctx.drawImage(v, r.sx, r.sy, r.size, r.size, 0, 0, N, N));
@@ -229,7 +236,8 @@
   }
   async function onFile(e) {
     const f = e.target.files && e.target.files[0]; e.target.value = '';
-    if (!f) return;
+    if (!f || busy) return;
+    if (f.type && !/^image\//.test(f.type)) return toast('이미지 파일만 분석할 수 있어요');
     stopCamera();
     const url = URL.createObjectURL(f);
     try { const im = await loadImage(url); runAnalysis(await fromImage(im)); }
@@ -240,6 +248,10 @@
   // ---------- 분석 ----------
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   async function runAnalysis(canvas, fast) {
+    busy = true;
+    try { return await doAnalysis(canvas, fast); } finally { busy = false; }
+  }
+  async function doAnalysis(canvas, fast) {
     show('analyzing');
     const sc = $('#scan-canvas'); sc.getContext('2d').drawImage(canvas, 0, 0, sc.width, sc.height);
     const steps = ['조명 보정 중…', '피부 표면 거칠기 측정 중…', '모공 패턴 찾는 중…', '잔주름 방향성 분석 중…'];
@@ -270,6 +282,15 @@
   function renderResult() {
     const { result, ts } = current, s = result.scores;
     show('result');
+    $('#screen-result').classList.toggle('invalid', !!result.invalid);
+    if (result.invalid) {
+      $('#res-date').textContent = fmtDate(ts);
+      $('#invalid-reasons').innerHTML = result.blockers.map((x) => `<li>${x}</li>`).join('');
+      $('#res-warn').hidden = true;
+      const ctx = $('#viz-canvas').getContext('2d'); SA.renderOverlay(ctx, current.canvas, result.viz, 'original');
+      $('#invalid-thumb').getContext('2d').drawImage(current.canvas, 0, 0, 240, 240);
+      return;
+    }
     $('#res-date').textContent = fmtDate(ts);
     $('#res-overall').textContent = s.overall;
     $('#ring').setAttribute('aria-label', `피부결 점수 ${s.overall}점, 등급 ${result.grade.key} ${result.grade.label}`);
@@ -328,7 +349,9 @@
   function saveHistory(h) { try { localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 40))); return true; } catch (e) { return false; } }
   function thumbOf(canvas) { const c = document.createElement('canvas'); c.width = c.height = 96; c.getContext('2d').drawImage(canvas, 0, 0, 96, 96); return c.toDataURL('image/jpeg', 0.7); }
   function saveCurrent() {
-    if (!current || current.saved) return toast('이미 저장된 결과예요');
+    if (!current) return;
+    if (current.result.invalid) return toast('측정이 완료되지 않은 결과는 저장할 수 없어요');
+    if (current.saved) return toast('이미 저장된 결과예요');
     const h = loadHistory();
     h.unshift({ ts: current.ts, scores: current.result.scores, grade: current.result.grade.key, thumb: thumbOf(current.canvas) });
     if (saveHistory(h)) { current.saved = true; toast('기록이 저장됐어요. 다음 측정 때 비교해 드릴게요!'); $('#btn-save').textContent = '저장 완료 ✓'; $('#btn-save').disabled = true; }
@@ -398,17 +421,24 @@
   }
   const LOGO = new Image(); LOGO.src = 'logo.svg';
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
+  let sharing = false;
   async function shareResult() {
-    if (!current) return;
+    if (!current || sharing || current.result.invalid) return;
+    sharing = true;
+    try { await doShare(); } finally { setTimeout(() => (sharing = false), 600); }
+  }
+  async function doShare() {
     const c = buildShareImage();
     const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
     const file = new File([blob], `HOW_피부결_${current.result.scores.overall}점.png`, { type: 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       try { await navigator.share({ files: [file], title: 'H.O.W 피부결 리포트', text: `H.O.W 피부결 테스터 — 내 피부결 점수는 ${current.result.scores.overall}점!` }); return; }
-      catch (e) { if (e.name === 'AbortError') return; }
+      catch (e) { if (e.name === 'AbortError' || e.name === 'InvalidStateError') return; }
     }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file.name;
+    const href = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = href; a.download = file.name;
     document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 30000);
     toast('결과 이미지를 저장했어요');
   }
 
@@ -426,9 +456,16 @@
   $('#btn-cam-retry').onclick = startCamera;
   $('#tap-to-play').onclick = () => { const v = $('#video'); v.play().then(() => ($('#tap-to-play').hidden = true)).catch(() => camError('unknown')); };
   setupInappBanner();
-  if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  // 안드로이드 뒤로가기: 앱을 닫지 않고 처음 화면으로
+  window.addEventListener('popstate', () => {
+    const onIntro = $('#screen-intro').classList.contains('active');
+    if (show._expectPop) { show._expectPop = false; if (!onIntro) try { history.pushState({ app: 1 }, ''); } catch (e) {} return; }
+    if (!onIntro) { stopCamera(); show._pop = true; show('intro'); }
+  });
+  if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((r) => r.update && r.update()).catch(() => {}));
   $('#btn-res-home').onclick = () => show('intro');
   $('#btn-retry').onclick = startCamera;
+  $('#btn-invalid-retry').onclick = startCamera;
   $('#btn-save').onclick = saveCurrent;
   $('#btn-share').onclick = shareResult;
   $('#viz-tabs').onclick = (e) => { const m = e.target.dataset && e.target.dataset.mode; if (m) setViz(m); };

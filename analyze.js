@@ -168,13 +168,21 @@
       lap += v * v;
     }
     const sharp = Math.sqrt(lap / cnt) / Math.max(meanL, 25) * 100;
-    const warnings = [];
-    if (meanL < 60) warnings.push('사진이 어두워요. 더 밝은 곳에서 찍으면 정확해져요.');
-    if (meanL > 220) warnings.push('사진이 너무 밝아요. 직사광선이나 강한 조명을 피해주세요.');
-    if (clip / n > 0.04) warnings.push('번들거림(반사광)이 감지됐어요. 유분을 살짝 정돈하고 다시 찍어보세요.');
-    if (sharp < 0.6) warnings.push('초점이 흐릿해 보여요. 카메라를 조금 떨어뜨려 초점을 맞춰주세요.');
+    const warnings = [], blockers = [];
     const rN = sumR / n, gN = sumG / n, bN = sumB / n;
-    if (bN > rN * 1.05 || gN > rN * 1.08) warnings.push('피부 영역이 아닌 것 같아요. 가이드 안에 피부만 들어오게 찍어주세요.');
+    const mx = Math.max(rN, gN, bN), mn = Math.min(rN, gN, bN), sat = mx > 0 ? (mx - mn) / mx : 0;
+    // 측정 불가(점수 미표시) 조건: 어두움/과노출/피부 아님/심한 흐림
+    if (meanL < 45) blockers.push('사진이 너무 어두워요. 밝은 곳에서 다시 찍어주세요.');
+    else if (meanL < 60) warnings.push('사진이 어두워요. 더 밝은 곳에서 찍으면 정확해져요.');
+    if (meanL > 235) blockers.push('사진이 너무 밝아요(하얗게 날아감). 직사광선·플래시를 피해 다시 찍어주세요.');
+    else if (meanL > 220) warnings.push('사진이 너무 밝아요. 직사광선이나 강한 조명을 피해주세요.');
+    if (clip / n > 0.25) blockers.push('강한 반사광이 넓게 잡혔어요. 조명 방향을 바꿔 다시 찍어주세요.');
+    else if (clip / n > 0.04) warnings.push('번들거림(반사광)이 감지됐어요. 유분을 살짝 정돈하고 다시 찍어보세요.');
+    if (sharp < 0.8) blockers.push('초점이 맞지 않았어요. 카메라를 조금 떨어뜨려 초점을 맞춘 뒤 다시 찍어주세요.');
+    else if (sharp < 1.5) warnings.push('초점이 약간 흐릿해 보여요. 선명하게 찍으면 더 정확해요.');
+    if (bN > rN * 1.05 || gN > rN * 1.08 || sat < 0.06) blockers.push('피부가 아닌 것 같아요. 가이드 사각형 안에 볼이나 이마 피부만 가득 차게 찍어주세요.');
+    else if (rN - bN < 12) warnings.push('피부색이 잘 인식되지 않았어요. 자연광에서 찍으면 더 정확해요.');
+    const invalid = blockers.length > 0;
 
     // --- 점수화 (보정값: 합성 테스트 + 일반적 근접 촬영 피부 기준) ---
     const smooth = toScore(rough, 2.0, 11.0);
@@ -185,8 +193,8 @@
     return {
       scores: { overall, smooth, pore, lines },
       grade: gradeOf(overall),
-      raw: { rough, poreDensity, poreDepth, poreIndex, lineIndex, meanL, sharp, clip: clip / n },
-      warnings,
+      raw: { rough, poreDensity, poreDepth, poreIndex, lineIndex, meanL, sharp, clip: clip / n, rgb: [sumR / n, sumG / n, sumB / n] },
+      warnings, blockers, invalid,
       viz: { size: w, localVar, lineMap, pores },
     };
   }

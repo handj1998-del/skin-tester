@@ -5,7 +5,7 @@
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Pretendard,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.01em;word-break:keep-all;overflow-wrap:anywhere;-webkit-text-size-adjust:100%;text-size-adjust:100%}
 #app{max-width:480px;margin:0 auto;min-height:100vh;min-height:100dvh;position:relative}
 .screen{display:none;padding:calc(18px + var(--safe-t)) 18px calc(28px + var(--safe-b));min-height:100vh;min-height:100dvh;animation:fade .35s ease}
 .screen.active{display:block}
@@ -150,3 +150,15 @@ a.btn{text-decoration:none}
 
 .brand-logo{height:30px;width:auto;display:inline-block}
 .topbar-logo{height:15px;width:auto;vertical-align:-1px;margin-right:4px}
+
+.only-invalid{display:none}
+#screen-result.invalid .only-invalid{display:block}
+#screen-result.invalid .needs-valid{display:none!important}
+.invalid-card{text-align:center}
+.invalid-card canvas{width:120px;height:120px;border-radius:18px;display:block;margin:4px auto 14px}
+.invalid-card h2{font-size:19px;margin:0 0 10px}
+.invalid-card ul{text-align:left;margin:0 0 10px;padding-left:20px;font-size:14px;line-height:1.6;color:#8a5a2b}
+.invalid-card .small{font-size:13px;color:var(--sub);margin:0 0 14px}
+.invalid-card .btn{margin-top:8px}
+[tabindex="-1"]:focus{outline:none}
+.btn{width:100%;box-sizing:border-box}
