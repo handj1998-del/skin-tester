@@ -211,14 +211,13 @@
       if (mode === 'heat') {
         const v = Math.sqrt(viz.localVar[i]);
         const t = Math.min(1, Math.max(0, (v - 1.5) / 7));
-        // 민트(매끈) → 노랑 → 코랄(거침)
-        const r = t < 0.5 ? 90 + 330 * t : 255;
-        const g = t < 0.5 ? 200 + 30 * t : 215 - 250 * (t - 0.5);
-        const b = t < 0.5 ? 180 - 260 * t : 50 + 60 * (t - 0.5);
-        img.data[p] = r; img.data[p + 1] = g; img.data[p + 2] = b; img.data[p + 3] = 85 + 80 * t;
+        // 세이지(매끈) → 샌드 → 테라코타(거침) — 절제된 톤
+        const lerp = (c1, c2, k) => c1.map((v, j) => v + (c2[j] - v) * k);
+        const c = t < 0.5 ? lerp([143, 179, 166], [226, 201, 154], t * 2) : lerp([226, 201, 154], [176, 98, 78], (t - 0.5) * 2);
+        img.data[p] = c[0]; img.data[p + 1] = c[1]; img.data[p + 2] = c[2]; img.data[p + 3] = 80 + 90 * t;
       } else if (mode === 'lines') {
         const t = Math.min(1, Math.max(0, (viz.lineMap[i] - 0.5) / 2.5));
-        img.data[p] = 255; img.data[p + 1] = 70; img.data[p + 2] = 140; img.data[p + 3] = 230 * t;
+        img.data[p] = 120; img.data[p + 1] = 52; img.data[p + 2] = 78; img.data[p + 3] = 230 * t;
       }
     }
     if (mode === 'heat' || mode === 'lines') {
@@ -231,7 +230,7 @@
       ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(0, 0, W, W);
       ctx.lineWidth = Math.max(1.5, k * 0.8);
       for (const p of viz.pores) {
-        ctx.strokeStyle = p.s > 6 ? 'rgba(232,74,95,0.95)' : 'rgba(255,170,60,0.95)';
+        ctx.strokeStyle = p.s > 6 ? 'rgba(150,72,56,0.95)' : 'rgba(250,240,228,0.95)';
         ctx.beginPath(); ctx.arc(p.x * k, p.y * k, Math.max(3, (2 + p.s / 3) * k * 0.9), 0, Math.PI * 2); ctx.stroke();
       }
     }

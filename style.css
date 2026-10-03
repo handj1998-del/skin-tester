@@ -174,3 +174,118 @@ a.btn{text-decoration:none}
 .update-banner button{border:0;font:inherit;cursor:pointer}
 #btn-update{background:#d58b84;color:#fff;font-weight:700;padding:7px 12px;border-radius:999px;font-size:13px}
 .ub-close{background:none;color:#cbb9b2;font-size:13px;padding:6px}
+
+/* =====================================================================
+   H.O.W 리디자인 v1.0.8 — 세련되지만 절제된 톤
+   ===================================================================== */
+@font-face{font-family:"Cormorant Garamond";font-weight:300 400;font-style:normal;font-display:swap;src:url(fonts/cg300.woff2) format("woff2")}
+@font-face{font-family:"Cormorant Garamond";font-weight:500 700;font-style:normal;font-display:swap;src:url(fonts/cg500.woff2) format("woff2")}
+:root{
+  --bg:#f6f2ee; --card:#fdfbf9; --ink:#2b2523; --sub:#6f6560; --line:#e7dfd8;
+  --rose:#a9796d; --rose-d:#8e6458; --accent:#a9796d;
+  --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
+  --radius:4px; --shadow:none;
+}
+html,body{background:var(--bg);color:var(--ink)}
+.screen{padding-left:22px;padding-right:22px}
+/* 상단 바 */
+.brand-bar{display:flex;justify-content:flex-end;min-height:34px}
+.refresh-btn{position:static;transform:none;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:transparent;color:var(--sub);font-size:12px;font-weight:500;letter-spacing:.04em;padding:7px 12px;border-radius:999px}
+.refresh-btn:active{transform:scale(.97)}
+.refresh-btn .i{width:14px;height:14px;color:var(--ink)}
+.i{width:22px;height:22px;display:block}
+/* 히어로 */
+.hero{padding:8px 0 34px}
+.hero-seal{position:relative;width:min(74vw,300px);aspect-ratio:1;margin:6px auto 30px;display:grid;place-items:center}
+.hero-ring{position:absolute;inset:0;width:100%;height:100%}
+.hero-logo{width:68%;height:auto;position:relative}
+h1{font-size:19px;font-weight:500;letter-spacing:.18em;margin:0 0 16px;text-indent:.18em}
+.rule{display:block;width:28px;height:1px;background:var(--accent);margin:0 auto 16px}
+.sub{font-size:13.5px;line-height:1.75;color:var(--sub)}
+.eyebrow{display:none}
+/* 카드 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:none;padding:24px 22px}
+.card h2,.card h3{font-size:15px;font-weight:600;letter-spacing:.01em;margin:0 0 18px}
+.kicker{display:block;font-family:var(--serif);font-weight:500;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+.guide-list li{gap:16px;padding:13px 0;border-top:1px solid var(--line)}
+.guide-list li:first-child{border-top:0}
+.num{flex:0 0 26px;font-family:var(--serif);font-size:18px;font-weight:500;color:var(--accent);line-height:1.2;letter-spacing:.02em}
+.guide-list b{font-size:14.5px;font-weight:600}
+.guide-list small{font-size:12.5px}
+/* 버튼 */
+.btn{border-radius:2px;font-weight:600;font-size:15px;letter-spacing:.04em;padding:17px 18px}
+.btn.primary{background:var(--ink);color:#f6f2ee;box-shadow:none}
+.btn.primary:active{background:#000}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid rgba(43,37,35,.28)}
+.btn.text{color:var(--sub);font-weight:500;letter-spacing:.02em}
+.btn.small{border-radius:2px}
+.actions{gap:12px;margin-top:22px}
+.privacy{font-size:12px;color:var(--sub);margin-top:18px}
+.privacy-detail{background:transparent;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;margin-top:18px}
+.privacy-detail summary{font-weight:500;letter-spacing:.04em;font-size:12.5px}
+.inapp-banner{background:var(--card);border:1px solid var(--line);border-left:2px solid var(--accent);border-radius:2px;color:var(--ink)}
+.ver-label{color:#8b807a;letter-spacing:.06em}
+/* 카메라 */
+.icon-btn{background:rgba(20,16,15,.38);color:#fff}
+.icon-btn.plain{background:none;color:var(--ink);font-family:var(--serif);font-size:34px;font-weight:300}
+.cam-guide{border-radius:2px}
+.cam-guide i{border-width:1.5px;width:26px;height:26px}
+.cam-guide i:nth-child(n){border-radius:0}
+.cam-guide.ok i{border-color:#e9dcd3}
+.cam-guide span{font-weight:500;letter-spacing:.04em;font-size:13px;background:rgba(20,16,15,.4)}
+.light-meter.good .dot{background:#9fbcae}.light-meter.bad .dot{background:#d29a8a}
+.shutter{border-width:2px}
+.cam-error{background:rgba(24,20,19,.95)}
+.cam-error-icon{display:flex;justify-content:center;color:#e9dcd3}.cam-error-icon .i{width:40px;height:40px}
+.cam-error h2{font-weight:500;letter-spacing:.04em}
+.btn.ghost.dark{border-color:rgba(255,255,255,.3);color:#fff}
+.cam-error .btn.primary{background:#f6f2ee;color:var(--ink)}
+/* 분석 중 */
+.scan-box{border-radius:2px;box-shadow:none;border:1px solid var(--line)}
+.scan-line{background:linear-gradient(180deg,rgba(246,242,238,0),rgba(246,242,238,.55));border-bottom:1px solid #fff}
+.analyzing h2{font-size:17px;font-weight:500;letter-spacing:.06em}
+/* 결과 */
+.topbar{font-weight:500}
+.topbar-title{display:inline-flex;align-items:center;gap:10px}
+.topbar-title em{font-style:normal;font-size:14px;letter-spacing:.08em;color:var(--sub);padding-left:10px;border-left:1px solid var(--line)}
+.topbar-logo{height:14px;width:auto;margin:0;vertical-align:baseline}
+.topbar .date{font-family:var(--serif);font-size:14px;letter-spacing:.04em}
+.score-card{background:var(--card)}
+.ring{width:196px;height:196px;margin:6px auto 18px}
+.ring circle{stroke-width:2.2}
+.ring .track{stroke:#ebe3dc}
+.ring .bar{stroke:var(--ink);stroke-linecap:butt}
+.ring-text b{font-family:var(--serif);font-weight:300;font-size:76px;letter-spacing:-.01em}
+.ring-text small{font-size:11.5px;letter-spacing:.18em;margin-top:2px}
+.grade{gap:6px}
+.grade-badge{background:transparent;color:var(--ink);border:1px solid rgba(43,37,35,.35);border-radius:50%;width:38px;height:38px;font-family:var(--serif);font-weight:500;font-size:20px}
+.grade b{font-size:17px;font-weight:600;letter-spacing:.06em}
+.grade p{font-size:13px}
+.delta{background:transparent;border:1px solid var(--line);border-radius:999px;font-weight:500;font-size:12.5px;color:var(--sub)}
+.delta.up{color:#4f6d62}.delta.down{color:#8f5446}
+.card.warn{background:var(--card);border:1px solid var(--line);border-left:2px solid var(--accent);color:var(--ink);font-size:13px}
+.warn-title{display:block;font-size:12px;letter-spacing:.12em;color:var(--accent);font-weight:600;margin-bottom:4px}
+.metric-head b{font-size:14.5px;font-weight:600;display:flex;align-items:baseline;gap:8px}
+.metric-head b i{font-style:normal;font-family:var(--serif);font-size:14px;font-weight:500;letter-spacing:.06em;color:var(--sub)}
+.metric-head span{font-size:12px}
+.metric-head em{font-family:var(--serif);font-weight:500;font-size:24px;line-height:1}
+.bar-bg{height:3px;border-radius:0;background:#ebe3dc}
+.bar-fg{border-radius:0}
+.viz-tabs{background:transparent;border-bottom:1px solid var(--line);border-radius:0;padding:0;gap:0}
+.viz-tabs button{border-radius:0;font-weight:500;font-size:13px;padding:10px 4px;border-bottom:1.5px solid transparent;margin-bottom:-1px}
+.viz-tabs button.on{background:transparent;box-shadow:none;color:var(--ink);border-bottom-color:var(--ink)}
+#viz-canvas{border-radius:2px}
+.tip{gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.tip b{font-size:14.5px;font-weight:600}.tip p{font-size:13px;color:var(--sub)}
+.h-item img{border-radius:2px}
+.h-item .sc{font-family:var(--serif);font-weight:400;font-size:30px}
+.invalid-card canvas{border-radius:2px}
+.invalid-card h2{font-weight:600}
+.invalid-card ul{color:var(--ink)}
+.disclaimer{font-size:11.5px}
+.update-banner{background:var(--ink);border-radius:2px;font-size:13px;letter-spacing:.02em}
+#btn-update{background:#f6f2ee;color:var(--ink);border-radius:2px}
+.toast{background:rgba(43,37,35,.94);border-radius:2px;font-size:13px}
+:focus-visible{outline:2px solid var(--ink)}
+.num,.kicker,.ring-text b,.metric-head em,.h-item .sc,.topbar .date{font-variant-numeric:lining-nums}
+.kicker,.num,.warn-title{color:var(--rose-d)}

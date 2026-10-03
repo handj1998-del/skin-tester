@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.0.7';
+  const APP_VERSION = '1.0.8';
   const BUILD_DATE = '2026-10-03';
   window.APP_VERSION = APP_VERSION;
   const $ = (s) => document.querySelector(s);
@@ -269,17 +269,19 @@
 
   // ---------- 결과 ----------
   const METRICS = [
-    { key: 'smooth', name: '매끄러움', ic: '🫧', desc: '표면 요철·거칠기가 적을수록 높아요' },
-    { key: 'pore', name: '모공', ic: '🔎', desc: '눈에 띄는 모공(어두운 점)이 적을수록 높아요' },
-    { key: 'lines', name: '잔주름', ic: '〰️', desc: '가는 선 형태의 결 꺾임이 적을수록 높아요' },
+    { key: 'smooth', name: '매끄러움', en: 'Smoothness', desc: '표면 요철·거칠기가 적을수록 높아요' },
+    { key: 'pore', name: '모공', en: 'Pores', desc: '눈에 띄는 모공(어두운 점)이 적을수록 높아요' },
+    { key: 'lines', name: '잔주름', en: 'Fine lines', desc: '가는 선 형태의 결 꺾임이 적을수록 높아요' },
   ];
   const TIPS = {
-    smooth: { ic: '🫧', t: '매끄러움 케어', p: '주 1~2회 저자극 각질 케어(PHA·LHA 등)로 묵은 각질을 정돈하고, 세라마이드·판테놀 보습제로 장벽을 채워주세요. 뜨거운 물 세안은 피해주세요.' },
-    pore: { ic: '🔎', t: '모공 케어', p: '저녁엔 약산성 클렌저로 꼼꼼히 세안하고, BHA(살리실산)·나이아신아마이드 제품을 꾸준히 사용해 보세요. 피지가 많은 날은 유분 조절 토너가 도움돼요.' },
-    lines: { ic: '〰️', t: '잔주름 케어', p: '건조로 생기는 잔주름은 수분 공급이 우선! 히알루론산 세럼 + 크림으로 수분을 잠그고, 낮에는 자외선 차단제를 꼭 덧발라 주세요. 레티놀은 저농도부터 천천히.' },
-    good: { ic: '✨', t: '지금처럼 유지해요', p: '좋은 피부결이에요. 충분한 수면과 수분 섭취, 매일 자외선 차단을 지켜주세요. 같은 조건으로 주 1회 측정하면 변화를 확인할 수 있어요.' },
+    smooth: { ic: '01', t: '매끄러움 케어', p: '주 1~2회 저자극 각질 케어(PHA·LHA 등)로 묵은 각질을 정돈하고, 세라마이드·판테놀 보습제로 장벽을 채워주세요. 뜨거운 물 세안은 피해주세요.' },
+    pore: { ic: '02', t: '모공 케어', p: '저녁엔 약산성 클렌저로 꼼꼼히 세안하고, BHA(살리실산)·나이아신아마이드 제품을 꾸준히 사용해 보세요. 피지가 많은 날은 유분 조절 토너가 도움돼요.' },
+    lines: { ic: '03', t: '잔주름 케어', p: '건조로 생기는 잔주름은 수분 공급이 우선! 히알루론산 세럼 + 크림으로 수분을 잠그고, 낮에는 자외선 차단제를 꼭 덧발라 주세요. 레티놀은 저농도부터 천천히.' },
+    good: { ic: '—', t: '지금처럼 유지해요', p: '좋은 피부결이에요. 충분한 수면과 수분 섭취, 매일 자외선 차단을 지켜주세요. 같은 조건으로 주 1회 측정하면 변화를 확인할 수 있어요.' },
   };
-  function barColor(s) { return s >= 75 ? 'linear-gradient(90deg,#9fd8c8,#5fb8a2)' : s >= 55 ? 'linear-gradient(90deg,#f3cf8e,#d9a95b)' : 'linear-gradient(90deg,#f2a58f,#e8765f)'; }
+  const TONE = { good: '#5f7d72', mid: '#a58a55', low: '#a3604f', ink: '#2b2523', acc: '#a9796d' };
+  function toneOf(s) { return s >= 75 ? TONE.good : s >= 55 ? TONE.mid : TONE.low; }
+  function barColor(s) { return toneOf(s); }
   function label(s) { return s >= 85 ? '아주 좋음' : s >= 70 ? '좋음' : s >= 55 ? '보통' : s >= 40 ? '관리 필요' : '집중 관리'; }
   function fmtDate(ts) { const d = new Date(ts); return `${d.getMonth() + 1}.${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; }
 
@@ -302,22 +304,22 @@
     $('#res-grade-label').textContent = result.grade.label;
     $('#res-grade-desc').textContent = result.grade.desc;
     const bar = $('#ring-bar');
-    bar.style.stroke = s.overall >= 72 ? '#5fb8a2' : s.overall >= 55 ? '#d9a95b' : '#e8765f';
+    bar.style.stroke = TONE.ink;
     bar.style.strokeDashoffset = 326.7;
     requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.strokeDashoffset = 326.7 * (1 - s.overall / 100); }));
     // 경고
     const w = $('#res-warn');
     w.hidden = !result.warnings.length;
-    w.innerHTML = result.warnings.map((x) => `<p>⚠️ ${x}</p>`).join('');
+    w.innerHTML = '<b class="warn-title">촬영 참고</b>' + result.warnings.map((x) => `<p>${x}</p>`).join('');
     // 항목
     $('#metrics').innerHTML = METRICS.map((m) => `
-      <div class="metric"><div class="metric-head"><b>${m.ic} ${m.name}</b><span>${label(s[m.key])} · <em>${s[m.key]}</em></span></div>
+      <div class="metric"><div class="metric-head"><b>${m.name}<i>${m.en}</i></b><span>${label(s[m.key])} · <em>${s[m.key]}</em></span></div>
       <div class="bar-bg" role="progressbar" aria-label="${m.name} 점수" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${s[m.key]}"><div class="bar-fg" data-w="${s[m.key]}" style="background:${barColor(s[m.key])}"></div></div><small>${m.desc}</small></div>`).join('');
     requestAnimationFrame(() => requestAnimationFrame(() => document.querySelectorAll('.bar-fg').forEach((b) => (b.style.width = b.dataset.w + '%'))));
     // 팁: 점수가 낮은 순
     const weak = METRICS.filter((m) => s[m.key] < 72).sort((a, b) => s[a.key] - s[b.key]);
     const tipKeys = weak.length ? weak.map((m) => m.key) : ['good'];
-    $('#tips').innerHTML = tipKeys.map((k) => `<div class="tip"><span class="ic">${TIPS[k].ic}</span><div><b>${TIPS[k].t}</b><p>${TIPS[k].p}</p></div></div>`).join('');
+    $('#tips').innerHTML = tipKeys.map((k, i) => `<div class="tip"><span class="num" aria-hidden="true">${k === 'good' ? '—' : String(i + 1).padStart(2, '0')}</span><div><b>${TIPS[k].t}</b><p>${TIPS[k].p}</p></div></div>`).join('');
     // 시각화
     setViz('heat');
     // 비교
@@ -334,9 +336,9 @@
     $('#btn-save').textContent = '기록 저장하기'; $('#btn-save').disabled = false;
   }
   const LEGEND = {
-    heat: '민트색은 매끈한 부분, 노랑→코랄로 갈수록 표면 요철이 많은 부분이에요.',
-    pores: '원으로 표시된 부분이 모공으로 추정되는 어두운 점이에요. (빨강: 더 뚜렷함)',
-    lines: '분홍색으로 표시된 부분이 선 형태의 결(잔주름)로 감지된 영역이에요.',
+    heat: '세이지색은 매끈한 부분, 샌드→테라코타로 갈수록 표면 요철이 많은 부분이에요.',
+    pores: '원으로 표시된 부분이 모공으로 추정되는 어두운 점이에요. (진한 갈색: 더 뚜렷함)',
+    lines: '자주색으로 표시된 부분이 선 형태의 결(잔주름)로 감지된 영역이에요.',
     original: '분석에 사용된 가이드 영역 원본이에요.',
   };
   function setViz(mode) {
@@ -380,12 +382,12 @@
     if (!pts.length) return;
     const xs = (i) => pts.length === 1 ? (pl + W - pr) / 2 : pl + 10 + (W - pl - pr - 20) * i / (pts.length - 1);
     const ys = (v) => pt + (H - pt - pb) * (1 - v / 100);
-    ctx.strokeStyle = '#d58b84'; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.beginPath();
+    ctx.strokeStyle = '#2b2523'; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.beginPath();
     pts.forEach((p, i) => (i ? ctx.lineTo(xs(i), ys(p.v)) : ctx.moveTo(xs(i), ys(p.v)))); ctx.stroke();
     pts.forEach((p, i) => {
-      ctx.fillStyle = p.pending ? '#fff' : '#d58b84'; ctx.strokeStyle = '#d58b84'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(xs(i), ys(p.v), 7, 0, 7); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#3b2f2c'; ctx.font = 'bold 20px Pretendard, sans-serif'; ctx.textAlign = 'center';
+      ctx.fillStyle = p.pending ? '#fdfbf9' : '#2b2523'; ctx.strokeStyle = p.pending ? '#a9796d' : '#2b2523'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(xs(i), ys(p.v), 5, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#2b2523'; ctx.font = '500 24px "Cormorant Garamond", Georgia, serif'; ctx.textAlign = 'center';
       ctx.fillText(p.v, xs(i), ys(p.v) - 14);
       ctx.fillStyle = '#b3a39c'; ctx.font = '17px Pretendard, sans-serif';
       const d = new Date(p.ts); ctx.fillText(p.pending ? '지금' : `${d.getMonth() + 1}/${d.getDate()}`, xs(i), H - 8);
@@ -398,30 +400,45 @@
     const { result, canvas, ts } = current, s = result.scores;
     const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
     const x = c.getContext('2d');
-    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#fbeee7'); g.addColorStop(1, '#f6e2d8'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#f6f2ee'; x.fillRect(0, 0, W, H);
     const F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif';
-    x.textAlign = 'center'; if (LOGO.complete && LOGO.naturalWidth) x.drawImage(LOGO, W / 2 - 96, 52, 192, 60); else { x.fillStyle = '#3b2f2c'; x.font = `600 40px ${F}`; x.fillText('H.O.W', W / 2, 95); }
-    x.fillStyle = '#3b2f2c'; x.font = `800 64px ${F}`; x.fillText('나의 피부결 리포트', W / 2, 175);
-    x.fillStyle = '#8a7a74'; x.font = `400 30px ${F}`; const d = new Date(ts); x.fillText(`${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`, W / 2, 225);
-    // 사진
-    x.save(); rr(x, 90, 280, 420, 420, 40); x.clip(); x.drawImage(canvas, 90, 280, 420, 420); x.restore();
-    // 점수
-    x.fillStyle = '#fffdfb'; rr(x, 560, 280, 430, 420, 40); x.fill();
-    x.fillStyle = '#8a7a74'; x.font = `500 32px ${F}`; x.fillText('피부결 점수', 775, 360);
-    x.fillStyle = '#3b2f2c'; x.font = `800 170px ${F}`; x.fillText(s.overall, 775, 530);
-    x.fillStyle = '#d58b84'; x.font = `700 44px ${F}`; x.fillText(`${result.grade.key} · ${result.grade.label}`, 775, 620);
-    // 바
+    const SERIF = '"Cormorant Garamond", Georgia, "Times New Roman", serif';
+    const INK = '#2b2523', SUB = '#6f6560', ACC = '#a9796d', LINE = 'rgba(43,37,35,.14)';
+    // 테두리 프레임
+    x.strokeStyle = LINE; x.lineWidth = 2; x.strokeRect(48, 48, W - 96, H - 96);
+    x.textAlign = 'center';
+    if (LOGO.complete && LOGO.naturalWidth) { const lw = 300, lh = lw * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, W / 2 - lw / 2, 120, lw, lh); }
+    else { x.fillStyle = INK; x.font = `300 80px ${SERIF}`; x.fillText('H.O.W', W / 2, 185); }
+    x.fillStyle = SUB; x.font = `500 26px ${F}`; spaced(x, '피부결 리포트', W / 2, 262, 8);
+    const d = new Date(ts); x.font = `400 30px ${SERIF}`; x.fillStyle = SUB; x.fillText(`${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}`, W / 2, 308);
+    x.fillStyle = ACC; x.fillRect(W / 2 - 24, 340, 48, 2);
+    // 사진 + 점수
+    const py = 400, ps = 400;
+    x.drawImage(canvas, 120, py, ps, ps); x.strokeStyle = LINE; x.strokeRect(120, py, ps, ps);
+    x.fillStyle = SUB; x.font = `500 26px ${F}`; spaced(x, '피부결 점수', 790, py + 70, 4);
+    x.fillStyle = INK; x.font = `300 220px ${SERIF}`; x.fillText(String(s.overall), 790, py + 285);
+    x.fillStyle = ACC; x.fillRect(790 - 60, py + 318, 120, 1.5);
+    x.fillStyle = INK; x.font = `500 34px ${F}`; x.fillText(`${result.grade.key} · ${result.grade.label}`, 790, py + 375);
+    // 항목
     x.textAlign = 'left';
     METRICS.forEach((m, i) => {
-      const y = 800 + i * 130, v = s[m.key];
-      x.fillStyle = '#3b2f2c'; x.font = `700 38px ${F}`; x.fillText(m.name, 90, y);
-      x.textAlign = 'right'; x.fillText(v, 990, y); x.textAlign = 'left';
-      x.fillStyle = '#f0ddd4'; rr(x, 90, y + 25, 900, 26, 13); x.fill();
-      x.fillStyle = v >= 75 ? '#5fb8a2' : v >= 55 ? '#d9a95b' : '#e8765f'; rr(x, 90, y + 25, Math.max(26, 900 * v / 100), 26, 13); x.fill();
+      const y = 920 + i * 110, v = s[m.key];
+      x.fillStyle = INK; x.font = `500 32px ${F}`; x.fillText(m.name, 120, y); const nw = x.measureText(m.name).width;
+      x.fillStyle = SUB; x.font = `400 28px ${SERIF}`; x.fillText(m.en, 120 + nw + 18, y);
+      x.textAlign = 'right'; x.fillStyle = INK; x.font = `400 44px ${SERIF}`; x.fillText(String(v), 960, y + 2); x.textAlign = 'left';
+      x.fillStyle = 'rgba(43,37,35,.10)'; x.fillRect(120, y + 26, 840, 3);
+      x.fillStyle = toneOf(v); x.fillRect(120, y + 26, Math.max(6, 840 * v / 100), 3);
     });
-    x.textAlign = 'center'; x.fillStyle = '#a3938c'; x.font = `400 24px ${F}`;
-    x.fillText('※ 의학적 진단이 아닌 참고용 결과이며, 조명·촬영 조건에 따라 달라질 수 있어요', W / 2, H - 70);
+    x.textAlign = 'center'; x.fillStyle = '#8b807a'; x.font = `400 22px ${F}`;
+    x.fillText('의학적 진단이 아닌 참고용 결과이며, 조명·촬영 조건에 따라 달라질 수 있어요', W / 2, H - 92);
     return c;
+  }
+  function spaced(x, text, cx, y, sp) {
+    const chars = [...text], widths = chars.map((ch) => x.measureText(ch).width);
+    const total = widths.reduce((a, b) => a + b, 0) + sp * (chars.length - 1);
+    const al = x.textAlign; x.textAlign = 'left';
+    let px = cx - total / 2; chars.forEach((ch, i) => { x.fillText(ch, px, y); px += widths[i] + sp; });
+    x.textAlign = al;
   }
   const LOGO = new Image(); LOGO.src = 'logo.svg';
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
@@ -432,6 +449,7 @@
     try { await doShare(); } finally { setTimeout(() => (sharing = false), 600); }
   }
   async function doShare() {
+    try { await Promise.all([document.fonts.load('300 220px "Cormorant Garamond"'), document.fonts.load('400 28px "Cormorant Garamond"')]); } catch (e) {}
     const c = buildShareImage();
     const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
     const file = new File([blob], `HOW_피부결_${current.result.scores.overall}점.png`, { type: 'image/png' });

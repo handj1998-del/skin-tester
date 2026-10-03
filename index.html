@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache">
-<meta name="theme-color" content="#f8f1ec">
+<meta name="theme-color" content="#f6f2ee">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>H.O.W 피부결 테스터 · 내 폰으로 1분 피부결 분석</title>
 <meta name="description" content="H.O.W 피부결 테스터 — 스마트폰 카메라로 피부를 가까이 찍으면 매끄러움·모공·잔주름을 분석해 드려요. 사진은 서버로 전송되지 않고 내 폰 안에서만 분석됩니다.">
@@ -23,6 +23,7 @@
 <meta name="twitter:description" content="내 폰 카메라로 1분 만에 매끄러움·모공·잔주름 분석">
 <meta name="twitter:image" content="https://handj1998-del.github.io/skin-tester/og-image.png">
 <link rel="canonical" href="https://handj1998-del.github.io/skin-tester/">
+<link rel="preload" href="fonts/cg300.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="H.O.W">
@@ -33,44 +34,51 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="stylesheet" href="style.css?v=1.0.7">
+<link rel="stylesheet" href="style.css?v=1.0.8">
 </head>
 <body>
 <div id="app">
 
   <!-- 1. 인트로 -->
   <main><section id="screen-intro" class="screen active" aria-label="시작">
-    <header class="brand"><img src="logo.svg" alt="H.O.W" class="brand-logo" width="96" height="30"><button class="refresh-btn" id="btn-refresh" type="button" aria-label="새로고침 (최신 버전 불러오기)"><span aria-hidden="true">↻</span> 새로고침</button></header>
+    <header class="brand-bar"><button class="refresh-btn" id="btn-refresh" type="button" aria-label="새로고침 (최신 버전 불러오기)"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg><span>새로고침</span></button></header>
     <div class="inapp-banner" id="inapp-banner" hidden>
-      <b>⚠️ <span id="inapp-name"></span> 안에서 열었어요</b>
+      <b><span id="inapp-name"></span> 안에서 열었어요</b>
       <p>앱 내 브라우저에서는 실시간 카메라가 동작하지 않을 수 있어요. <span id="inapp-browser">Chrome</span>으로 열면 더 정확하게 측정할 수 있어요.</p>
       <div class="row"><a class="btn small primary" id="btn-open-external" href="#">Chrome으로 열기</a><button class="btn small ghost" id="btn-copy-link">링크 복사</button></div>
     </div>
     <div class="hero">
-      <div class="hero-orb" aria-hidden="true"><div class="orb-inner"></div></div>
-      <p class="eyebrow">내 폰으로 1분 만에</p>
+      <div class="hero-seal">
+        <svg class="hero-ring" viewBox="0 0 300 300" aria-hidden="true">
+          <circle cx="150" cy="150" r="146" fill="none" stroke="#2b2523" stroke-opacity=".16" stroke-width="1"/>
+          <circle cx="150" cy="150" r="128" fill="none" stroke="#2b2523" stroke-opacity=".08" stroke-width="1" stroke-dasharray="1 5"/>
+          <path d="M150 4 A146 146 0 0 1 253.2 46.8" fill="none" stroke="#a9796d" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <img src="logo.svg" alt="H.O.W" class="hero-logo" width="200" height="45">
+      </div>
       <h1>피부결 테스터</h1>
+      <span class="rule" aria-hidden="true"></span>
       <p class="sub">카메라로 피부를 가까이 찍으면<br>매끄러움 · 모공 · 잔주름을 분석해 드려요</p>
     </div>
     <div class="card guide">
-      <h2>정확한 측정을 위한 촬영 가이드</h2>
+      <h2><span class="kicker">Guide</span>정확한 측정을 위한 촬영 가이드</h2>
       <ul class="guide-list">
-        <li><span class="ic" aria-hidden="true">☀️</span><div><b>밝고 고른 빛</b><small>창가 자연광 또는 밝은 실내조명. 그림자가 지지 않게</small></div></li>
-        <li><span class="ic" aria-hidden="true">⚡</span><div><b>플래시는 끄기</b><small>쓴다면 매번 같은 조건으로 촬영하세요</small></div></li>
-        <li><span class="ic" aria-hidden="true">📏</span><div><b>약 10cm 거리</b><small>초점이 선명하게 맞는 가장 가까운 거리</small></div></li>
-        <li><span class="ic" aria-hidden="true">🙂</span><div><b>볼 또는 이마</b><small>가이드 사각형 안에 피부만 가득 차게</small></div></li>
-        <li><span class="ic" aria-hidden="true">🧴</span><div><b>메이크업 없이</b><small>세안 후 맨얼굴, 유분은 가볍게 정돈</small></div></li>
+        <li><span class="num" aria-hidden="true">01</span><div><b>밝고 고른 빛</b><small>창가 자연광 또는 밝은 실내조명. 그림자가 지지 않게</small></div></li>
+        <li><span class="num" aria-hidden="true">02</span><div><b>플래시는 끄기</b><small>쓴다면 매번 같은 조건으로 촬영하세요</small></div></li>
+        <li><span class="num" aria-hidden="true">03</span><div><b>약 10cm 거리</b><small>초점이 선명하게 맞는 가장 가까운 거리</small></div></li>
+        <li><span class="num" aria-hidden="true">04</span><div><b>볼 또는 이마</b><small>가이드 사각형 안에 피부만 가득 차게</small></div></li>
+        <li><span class="num" aria-hidden="true">05</span><div><b>메이크업 없이</b><small>세안 후 맨얼굴, 유분은 가볍게 정돈</small></div></li>
       </ul>
     </div>
     <div class="actions">
       <button class="btn primary" id="btn-start">카메라로 측정하기</button>
-      <label class="btn ghost" for="file-input">📷 기본 카메라 앱으로 촬영하기</label>
+      <label class="btn ghost" for="file-input">기본 카메라 앱으로 촬영하기</label>
       <input type="file" id="file-input" class="vh" aria-label="기본 카메라 앱으로 촬영하기" accept="image/*" capture="environment">
       <label class="btn text" for="file-input3">앨범에서 사진 선택하기</label>
       <input type="file" id="file-input3" class="vh" aria-label="앨범에서 사진 선택하기" accept="image/*">
       <button class="btn text" id="btn-history">지난 측정 기록 보기</button>
     </div>
-    <p class="privacy">🔒 H.O.W는 사진을 받지 않아요. 사진은 서버로 전송되지 않고 내 폰 안에서만 분석돼요</p>
+    <p class="privacy">H.O.W는 사진을 받지 않아요. 사진은 서버로 전송되지 않고 내 폰 안에서만 분석돼요</p>
     <details class="privacy-detail" id="privacy-intro">
       <summary>개인정보 · 이용 안내</summary>
       <div class="privacy-body">
@@ -91,22 +99,22 @@
       <button class="tap-to-play" id="tap-to-play" hidden>▶︎ 화면을 눌러 카메라 시작</button>
       <div class="cam-mask" id="cam-mask" aria-hidden="true"><div class="cam-guide" id="cam-guide"><i></i><i></i><i></i><i></i><span id="guide-tip">볼 또는 이마를 사각형 안에</span></div></div>
       <div class="cam-top">
-        <button class="icon-btn" id="btn-cam-close" aria-label="닫기">✕</button>
+        <button class="icon-btn" id="btn-cam-close" aria-label="닫기"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         <div class="light-meter" id="light-meter"><span class="dot"></span><span id="light-text">밝기 확인 중</span></div>
-        <button class="icon-btn" id="btn-torch" aria-label="조명" hidden>💡</button>
+        <button class="icon-btn" id="btn-torch" aria-label="조명" hidden><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg></button>
       </div>
       <div class="cam-bottom">
-        <label class="icon-btn small" for="file-input2" aria-label="앨범">🖼</label>
+        <label class="icon-btn small" for="file-input2" aria-label="앨범"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M20 16l-5-5-8 8"/></svg></label>
         <input type="file" id="file-input2" class="vh" aria-label="앨범에서 사진 선택하기" accept="image/*">
         <button class="shutter" id="btn-shutter" aria-label="촬영"><span></span></button>
-        <button class="icon-btn small" id="btn-flip" aria-label="카메라 전환">🔄</button>
+        <button class="icon-btn small" id="btn-flip" aria-label="카메라 전환"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9a8 8 0 0 1 14.3-3.3L20 8"/><path d="M20 3v5h-5"/><path d="M20 15a8 8 0 0 1-14.3 3.3L4 16"/><path d="M4 21v-5h5"/></svg></button>
       </div>
       <p class="cam-hint">약 10cm 거리에서 초점이 맞으면 촬영하세요</p>
       <div class="cam-error" id="cam-error" hidden>
-        <div class="cam-error-icon">📷</div>
+        <div class="cam-error-icon"><svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></div>
         <h2 id="cam-error-title">카메라를 사용할 수 없어요</h2>
         <div id="cam-error-text" class="cam-error-text"></div>
-        <label class="btn primary" for="file-input">📷 기본 카메라 앱으로 촬영하기</label>
+        <label class="btn primary" for="file-input">기본 카메라 앱으로 촬영하기</label>
         <a class="btn ghost" id="cam-error-external" href="#" hidden>Chrome으로 열기</a>
         <button class="btn ghost dark" id="btn-cam-retry">다시 시도</button>
         <button class="btn text light" id="btn-cam-back">처음으로</button>
@@ -125,7 +133,7 @@
 
   <!-- 4. 결과 -->
   <section id="screen-result" class="screen">
-    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span><img src="logo.svg" alt="H.O.W" class="topbar-logo" width="54" height="17"> 분석 결과</span><span class="date" id="res-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg" alt="H.O.W" class="topbar-logo" width="62" height="14"><em>분석 결과</em></span><span class="date" id="res-date"></span></header>
     <div class="card score-card needs-valid">
       <div class="ring" id="ring" role="img" aria-label="피부결 점수"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="ring-bar"/></svg>
         <div class="ring-text"><b id="res-overall">0</b><small>피부결 점수</small></div></div>
@@ -142,11 +150,11 @@
       <label class="btn ghost" for="file-input3">다른 사진 선택하기</label>
     </div>
     <div class="card needs-valid">
-      <h3>항목별 점수</h3>
+      <h3><span class="kicker">Detail</span>항목별 점수</h3>
       <div class="metrics" id="metrics"></div>
     </div>
     <div class="card needs-valid">
-      <h3>분석 영역 시각화</h3>
+      <h3><span class="kicker">Map</span>분석 영역 시각화</h3>
       <div class="viz-tabs" id="viz-tabs" role="group" aria-label="시각화 종류 선택">
         <button data-mode="heat" class="on">거칠기 맵</button><button data-mode="pores">모공</button><button data-mode="lines">잔주름</button><button data-mode="original">원본</button>
       </div>
@@ -154,11 +162,11 @@
       <p class="viz-legend" id="viz-legend"></p>
     </div>
     <div class="card needs-valid">
-      <h3>맞춤 케어 팁</h3>
+      <h3><span class="kicker">Care</span>맞춤 케어 팁</h3>
       <div id="tips"></div>
     </div>
     <div class="card needs-valid" id="history-card" hidden>
-      <h3>피부결 변화</h3>
+      <h3><span class="kicker">Progress</span>피부결 변화</h3>
       <canvas id="trend-canvas" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas>
       <div id="history-list" class="history-list"></div>
     </div>
@@ -176,7 +184,7 @@
 
   <!-- 5. 기록 -->
   <section id="screen-history" class="screen">
-    <header class="topbar"><button class="icon-btn plain" id="btn-hist-home" aria-label="뒤로">‹</button><span>측정 기록</span><span></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-hist-home" aria-label="뒤로">‹</button><span class="topbar-title"><img src="logo.svg" alt="H.O.W" class="topbar-logo" width="62" height="14"><em>측정 기록</em></span><span class="date"></span></header>
     <div class="card"><h3>피부결 점수 추이</h3><canvas id="trend-canvas2" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas></div>
     <div class="card"><div id="history-list2" class="history-list"></div></div>
     <div class="actions"><button class="btn text" id="btn-clear">기록 전체 삭제</button></div>
@@ -188,7 +196,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=1.0.7"></script>
-<script src="app.js?v=1.0.7"></script>
+<script src="analyze.js?v=1.0.8"></script>
+<script src="app.js?v=1.0.8"></script>
 </body>
 </html>

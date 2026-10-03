@@ -2,7 +2,7 @@
 // 버전은 app.js의 APP_VERSION이 등록 URL(sw.js?v=...)로 전달됨
 const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
 const CACHE = 'skin-tester-' + VERSION;
-const SHELL = ['./', 'style.css?v=' + VERSION, 'app.js?v=' + VERSION, 'analyze.js?v=' + VERSION, 'manifest.webmanifest', 'logo.svg', 'icons/icon-192.png', 'icons/favicon-32.png', 'icons/icon.svg'];
+const SHELL = ['./', 'style.css?v=' + VERSION, 'app.js?v=' + VERSION, 'analyze.js?v=' + VERSION, 'manifest.webmanifest', 'logo.svg', 'icons/icon-192.png', 'icons/favicon-32.png', 'icons/icon.svg', 'fonts/cg300.woff2', 'fonts/cg500.woff2'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
