@@ -1,6 +1,6 @@
 {
-  "name": "H.O.W 피부결 테스터",
-  "short_name": "H.O.W",
+  "name": "피부결테스터",
+  "short_name": "피부결테스터",
   "description": "H.O.W — 내 폰 카메라로 피부결(매끄러움·모공·잔주름)을 분석하는 셀프 테스터. 사진은 기기 안에서만 분석됩니다.",
   "lang": "ko",
   "start_url": "./",

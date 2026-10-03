@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.1.1';
+  const APP_VERSION = '1.1.2';
   const BUILD_DATE = '2026-10-03';
   window.APP_VERSION = APP_VERSION;
   const $ = (s) => document.querySelector(s);

@@ -25,16 +25,17 @@
 <link rel="canonical" href="https://handj1998-del.github.io/skin-tester/">
 <link rel="preload" href="fonts/cg300.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.1.1">
-<meta name="apple-mobile-web-app-title" content="H.O.W">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.1.2">
+<meta name="apple-mobile-web-app-title" content="피부결테스터">
+<meta name="application-name" content="피부결테스터">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="icon" type="image/svg+xml" href="icons/favicon.svg?v=1.1.1">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1.1.1">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg?v=1.1.2">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1.1.2">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="stylesheet" href="style.css?v=1.1.1">
+<link rel="stylesheet" href="style.css?v=1.1.2">
 </head>
 <body>
 <div id="app">
@@ -50,7 +51,7 @@
           <circle cx="150" cy="150" r="128" fill="none" stroke="#2b2523" stroke-opacity=".08" stroke-width="1" stroke-dasharray="1 5"/>
           <path d="M150 4 A146 146 0 0 1 253.2 46.8" fill="none" stroke="#a9796d" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-          <img src="logo.svg?v=1.1.1" alt="H.O.W" class="hero-logo" width="200" height="51">
+          <img src="logo.svg?v=1.1.2" alt="H.O.W" class="hero-logo" width="200" height="51">
         </div>
         <h1>피부결 테스터</h1>
         <p class="sub">폰 카메라로 매끄러움 · 모공 · 잔주름을 분석해요</p>
@@ -142,7 +143,7 @@
 
   <!-- 4. 결과 -->
   <section id="screen-result" class="screen">
-    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.1.1" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>분석 결과</em></span><span class="date" id="res-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.1.2" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>분석 결과</em></span><span class="date" id="res-date"></span></header>
     <div class="card score-card needs-valid">
       <div class="ring" id="ring" role="img" aria-label="피부결 점수"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="ring-bar"/></svg>
         <div class="ring-text"><b id="res-overall">0</b><small>피부결 점수</small></div></div>
@@ -200,7 +201,7 @@
 
   <!-- 5. 기록 -->
   <section id="screen-history" class="screen">
-    <header class="topbar"><button class="icon-btn plain" id="btn-hist-home" aria-label="뒤로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.1.1" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>측정 기록</em></span><span class="date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-hist-home" aria-label="뒤로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.1.2" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>측정 기록</em></span><span class="date"></span></header>
     <div class="card"><h3>피부결 점수 추이</h3><canvas id="trend-canvas2" width="640" height="220" role="img" aria-label="피부결 점수 추이 그래프"></canvas></div>
     <div class="card"><div id="history-list2" class="history-list"></div></div>
     <div class="actions"><button class="btn text" id="btn-clear">기록 전체 삭제</button></div>
@@ -212,8 +213,8 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=1.1.1"></script>
-<script src="recommend.js?v=1.1.1"></script>
-<script src="app.js?v=1.1.1"></script>
+<script src="analyze.js?v=1.1.2"></script>
+<script src="recommend.js?v=1.1.2"></script>
+<script src="app.js?v=1.1.2"></script>
 </body>
 </html>
