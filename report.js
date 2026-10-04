@@ -377,17 +377,16 @@
   }
   function zonesType(doc) {
     var d = doc.d, x = doc.x, y; doc.ensure(300); x = doc.x; y = doc.y;
-    font(x, 600, 17); x.fillStyle = ACC; spaced(x, 'SKIN TYPE', M, y + 30, 4);
-    font(x, 600, 44); x.fillStyle = INK; x.fillText(d.type.name, M, y + 92);
-    font(x, 400, 21); x.fillStyle = SUB; var dl = wrap(x, (TYPE_DESC[d.type.key] || '') + ' ' + d.typeNote, CW / 2 - 20); dl.forEach(function (ln, i) { x.fillText(ln, M, y + 140 + i * 32); });
+    font(x, 600, 44); x.fillStyle = INK; x.fillText(d.type.name, M, y + 62);
+    font(x, 400, 21); x.fillStyle = SUB; var dl = wrap(x, (TYPE_DESC[d.type.key] || '') + ' ' + d.typeNote, CW / 2 - 20); dl.forEach(function (ln, i) { x.fillText(ln, M, y + 110 + i * 32); });
     var X = M + CW / 2 + 30, bw = CW / 2 - 30;
     d.tu.forEach(function (r, i) {
-      var yy = y + 60 + i * 110;
+      var yy = y + 40 + i * 110;
       font(x, 600, 24); x.fillStyle = INK; x.fillText(r.label, X, yy);
       x.textAlign = 'right'; x.fillText(r.level, X + bw, yy); font(x, 400, 20); x.fillStyle = SUB; x.fillText('광택 ' + r.v + '%', X + bw - x.measureText(r.level).width - 70, yy); x.textAlign = 'left';
       doc.bar(X, yy + 22, bw, r.v / 10, r.color, 10);
     });
-    doc.y = Math.max(y + 300, y + 150 + dl.length * 32 + 20);
+    doc.y = Math.max(y + 270, y + 120 + dl.length * 32 + 20);
   }
   function metrics(doc) {
     doc.d.metrics.forEach(function (m) {
