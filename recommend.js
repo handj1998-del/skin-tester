@@ -187,5 +187,50 @@
     return { primer, finish, finishWhy, tips, focus: FACE_CARE[k].name };
   }
 
-  root.HowRecommend = { buildCare, buildMakeup, buildFaceCare, buildFaceMakeup, faceFocus, estimateTone, srgbToLab, SEASONS, NAMES };
+
+  // ---------- 5) 부위별 종합 (여러 부위 가까이 촬영) ----------
+  const SHINE_T = [1.5, 4];
+  function skinTypeTU(T, U) { // 얼굴 전체 분석과 같은 기준 (광택 비율 %)
+    const hi = SHINE_T[1], lo = SHINE_T[0];
+    if ((T >= hi && U >= lo) || (T >= lo * 1.7 && U >= lo * 1.7)) return { key: 'oily', name: '지성 경향' };
+    if (T >= lo * 1.5 && T >= U * 1.5) return { key: 'combo', name: '복합성 경향' };
+    if (T >= hi) return { key: 'oily', name: '지성 경향' };
+    return { key: 'drynormal', name: '건성·중성 경향' };
+  }
+  const ZONE_TIP = {
+    smooth: '각질 정돈 + 보습 (PHA 주 1회, 세라마이드 크림)',
+    pore: '모공 정돈 (BHA 주 2~3회, 나이아신아마이드)',
+    lines: '수분·탄력 (히알루론산, 저농도 레티놀은 천천히)',
+  };
+  const uniq = (arr) => arr.filter((x, i) => arr.indexOf(x) === i);
+  const head = (n) => n.split(/[\s(·]/)[0];
+  const uniqBy = (arr) => arr.filter((x, i) => arr.findIndex((y) => head(y[0]) === head(x[0])) === i);
+  function minKey(sc) { return sortedWeak(sc)[0].k; }
+  // zones: [{ name, scores, redLevel, shineLevel }] (측정된 부위만), agg: 가중 평균 점수, fi: buildFaceCare 입력 형식
+  function buildZoneCare(agg, zones, fi) {
+    const base = buildCare(agg), fc = buildFaceCare(fi), k = faceFocus(fi);
+    const color = ['redness', 'oil', 'combo', 'redoil'].indexOf(k) >= 0;
+    const worst = zones.slice().sort((a, b) => a.scores.overall - b.scores.overall), w0 = worst[0];
+    const wk = w0 ? minKey(w0.scores) : null;
+    const zoneTips = worst.filter((z) => z.scores.overall < 80).slice(0, 3).map((z) => `${z.name} — ${NAMES[minKey(z.scores)]}: ${ZONE_TIP[minKey(z.scores)]}`);
+    zones.filter((z) => z.redLevel >= 2).forEach((z) => zoneTips.push(`${z.name} — 붉은기: 진정 토너·판테놀, 문지르지 않기`));
+    zones.filter((z) => z.shineLevel >= 2).forEach((z) => zoneTips.push(`${z.name} — 유분: 가벼운 수분 젤, 기름종이로 눌러 덜어내기`));
+    const lastPm = base.pm[base.pm.length - 1], lastAvoid = base.avoid[base.avoid.length - 1];
+    const am = uniq([base.am[0]].concat(color ? fc.am.slice(1, 2) : [], base.am.slice(1))).slice(0, 5);
+    const pm = uniq(base.pm.slice(0, -1).concat(color ? fc.pm.slice(1, 2) : [], [lastPm])).slice(0, 6);
+    const ingredients = uniqBy(base.ingredients.slice(0, 4).concat(color ? fc.ingredients.slice(0, 3) : [])).slice(0, 7);
+    const weekly = uniq(base.weekly.concat(color ? fc.weekly.slice(0, 1) : [])).slice(0, 4);
+    const avoid = uniq(base.avoid.slice(0, -1).concat(color ? fc.avoid.slice(0, 1) : [], [lastAvoid])).slice(0, 6);
+    const needFocus = w0 && w0.scores.overall < 80;
+    const priorityName = needFocus ? `${w0.name} · ${NAMES[wk]}` : color ? fc.priorityName : base.priorityName;
+    const headline = needFocus ? `가장 낮은 ${w0.name}(${w0.scores.overall}점)의 ${NAMES[wk]} 케어를 먼저${color ? ', ' + fc.priorityName + ' 함께' : ''}` : color ? fc.headline : base.headline;
+    return { mode: needFocus || color ? 'focus' : base.mode, primary: base.primary, secondary: base.secondary, colorFocus: color ? k : null, priorityName, title: priorityName, headline, am, pm, ingredients, weekly, avoid, zoneTips };
+  }
+  function buildZoneMakeup(agg, fi) {
+    const b = buildMakeup(agg), f = buildFaceMakeup(fi), oilish = fi.type === 'oily' || fi.type === 'combo';
+    const extra = f.tips.filter((t) => /코렉터|붉은|기름종이|파우더는 T존/.test(t));
+    const tips = uniq(b.tips.slice(0, -1).concat(extra, [b.tips[b.tips.length - 1]])).slice(0, 8);
+    return { primer: oilish ? f.primer : b.primer, finish: oilish ? f.finish : b.finish, finishWhy: oilish ? f.finishWhy : b.finishWhy, tips, focus: b.focus || f.focus };
+  }
+  root.HowRecommend = { buildCare, buildMakeup, buildFaceCare, buildFaceMakeup, faceFocus, buildZoneCare, buildZoneMakeup, skinTypeTU, SHINE_T, estimateTone, srgbToLab, SEASONS, NAMES };
 })(typeof window !== 'undefined' ? window : globalThis);

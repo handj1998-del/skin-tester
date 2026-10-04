@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.3.3';
+  const APP_VERSION = '1.4.0';
   const BUILD_DATE = '2026-10-04';
   window.APP_VERSION = APP_VERSION;
   (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
@@ -166,7 +166,7 @@
     const ext = INAPP && externalOpenUrl();
     const eb = $('#cam-error-external');
     if (ext) { eb.href = ext; eb.hidden = false; eb.textContent = IS_IOS ? 'Safari로 열기' : 'Chrome으로 열기'; } else eb.hidden = true;
-    const fb = $('#cam-error label.btn'); if (fb) fb.htmlFor = faceMode ? 'face-file' : 'file-input';
+    const fb = $('#cam-error label.btn'); if (fb) fb.htmlFor = faceMode ? 'face-file' : zonesMode ? 'file-input2' : 'file-input';
     $('#cam-error').dataset.code = code;
     $('#cam-error').hidden = false;
   }
@@ -215,6 +215,7 @@
   function captureFromVideo() {
     if (busy) return;
     if (faceMode) return captureFace();
+    if (zonesMode) return captureZone();
     const v = $('#video'); if (!v.videoWidth) return toast('카메라가 준비 중이에요');
     const r = guideRectInVideo();
     const c = makeWorkCanvas((ctx, N) => ctx.drawImage(v, r.sx, r.sy, r.size, r.size, 0, 0, N, N));
@@ -254,10 +255,11 @@
     if (!f || busy) return;
     if (f.type && !/^image\//.test(f.type)) return toast('이미지 파일만 분석할 수 있어요');
     const toFace = id === 'face-file' || (id === 'file-input2' && faceMode);
-    if (!toFace) exitFaceMode();
+    const toZone = id === 'file-input2' && zonesMode && !faceMode;
+    if (!toFace && !toZone) { exitFaceMode(); exitZonesMode(); zoneSession = null; }
     stopCamera();
     const url = URL.createObjectURL(f);
-    try { const im = await loadImage(url); if (toFace) runFace(fromFaceImage(im)); else runAnalysis(await fromImage(im)); }
+    try { const im = await loadImage(url); if (toFace) runFace(fromFaceImage(im)); else if (toZone) runZone(await fromImage(im)); else runAnalysis(await fromImage(im)); }
     catch (err) { toast('사진을 불러오지 못했어요'); show('intro'); }
     finally { setTimeout(() => URL.revokeObjectURL(url), 5000); }
   }
@@ -352,7 +354,12 @@
   function list(items, ordered) { const t = ordered ? 'ol' : 'ul'; return `<${t} class="rec-list">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</${t}>`; }
   function swatches(arr, cls = '') { return `<div class="sw-row ${cls}">${arr.map(([n, hex]) => `<div class="sw"><span class="dot" style="background:${hex}" aria-hidden="true"></span><small>${esc(n)}</small></div>`).join('')}</div>`; }
   function renderRecs() {
-    if (current.mode === 'face') {
+    if (current.mode === 'zones') {
+      const Z = current.zones;
+      current.care = REC.buildZoneCare(Z.agg, Z.ok.map((z) => ({ name: z.name, scores: z.scores, redLevel: z.redLevel, shineLevel: z.shineLevel })), Z.fi);
+      current.makeup = REC.buildZoneMakeup(Z.agg, Z.fi);
+      current.skinRGB = Z.skinRGB; current.tone = REC.estimateTone(Z.skinRGB, Z.warnings);
+    } else if (current.mode === 'face') {
       const fi = faceRecInput(current.face);
       current.care = REC.buildFaceCare(fi); current.makeup = REC.buildFaceMakeup(fi);
       current.skinRGB = current.face.skinRGB; current.tone = REC.estimateTone(current.skinRGB, current.face.warnings);
@@ -364,6 +371,7 @@
     const c = current.care, m = current.makeup;
     $('#panel-care').innerHTML = `
       <div class="rec-hero"><span class="rec-label">집중 영역</span><b>${esc(c.priorityName)}</b><p>${esc(c.headline)}</p></div>
+      ${c.zoneTips && c.zoneTips.length ? `<h4><span class="kicker">By zone</span>부위별 포인트</h4>${list(c.zoneTips)}` : ''}
       <div class="rec-split">
         <div><h4><span class="kicker">AM</span>아침</h4>${list(c.am, true)}</div>
         <div><h4><span class="kicker">PM</span>저녁</h4>${list(c.pm, true)}</div>
@@ -389,7 +397,7 @@
     $('#panel-color').innerHTML = `
       <div class="tone-est">
         <span class="skin-dot" style="background:rgb(${skin.join(',')})" aria-hidden="true"></span>
-        <div><span class="rec-label">${current.mode === 'face' ? '얼굴 피부색 기반 추정' : '사진 기반 추정'}</span><b>${t.undertone === 'warm' ? '웜' : '쿨'} 톤 · ${esc(E.name)}</b>
+        <div><span class="rec-label">${current.mode === 'face' ? '얼굴 피부색 기반 추정' : current.mode === 'zones' ? '부위 사진 피부색 기반 추정' : '사진 기반 추정'}</span><b>${t.undertone === 'warm' ? '웜' : '쿨'} 톤 · ${esc(E.name)}</b>
         <p>신뢰도 ${conf}${t.neutral ? ' · 뉴트럴에 가까워요' : ''}. 조명과 카메라 화이트밸런스의 영향을 크게 받는 참고값이에요. 알고 있는 퍼스널컬러가 있다면 아래에서 선택해 주세요.</p></div>
       </div>
       <div class="season-pick" role="radiogroup" aria-label="퍼스널컬러 선택">
@@ -435,10 +443,11 @@
   function wipeSession() {
     current = null; seasonChoice = 'auto'; recTab = 'care';
     if (typeof resetReport === 'function') resetReport();
-    ['#viz-canvas', '#invalid-thumb', '#face-map', '#face-invalid-thumb', '#scan-canvas'].forEach((sel) => { const c = $(sel); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); });
-    ['#panel-care', '#panel-makeup', '#panel-color', '#metrics', '#face-zones', '#face-tu'].forEach((sel) => { const el = $(sel); if (el) el.innerHTML = ''; });
+    zoneSession = null; zonesMode = false; const zb = $('#btn-face-zskip'); if (zb) zb.hidden = true;
+    ['#viz-canvas', '#invalid-thumb', '#face-map', '#face-invalid-thumb', '#scan-canvas', '#zr-map', '#zr-face-map', '#zs-thumb'].forEach((sel) => { const c = $(sel); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); });
+    ['#panel-care', '#panel-makeup', '#panel-color', '#metrics', '#face-zones', '#face-tu', '#zr-list', '#zr-tu', '#zr-best', '#zs-metrics', '#zs-reasons'].forEach((sel) => { const el = $(sel); if (el) el.innerHTML = ''; });
   }
-  function nextCustomer() { stopCamera(); exitFaceMode(); show('intro'); window.scrollTo(0, 0); }
+  function nextCustomer() { stopCamera(); exitFaceMode(); exitZonesMode(); show('intro'); window.scrollTo(0, 0); }
 
   // ---------- 결과 이미지 ----------
   function buildShareImage() {
@@ -644,10 +653,15 @@
       const n = det.faceLandmarks ? det.faceLandmarks.length : 0;
       const res = t.FA.analyze(data, W, H, n ? det.faceLandmarks[0] : null, n);
       if (!fast) await sleep(600);
+      if (zonesMode && zoneSession && zoneSession.faceStep) { // 부위별 종합의 마지막 단계
+        if (res.invalid) { show('face'); $('#btn-face-zskip').hidden = false; $('#face-invalid').hidden = false; $('#face-valid').hidden = true; $('#face-reasons').innerHTML = res.blockers.map((b) => `<li>${esc(b)}</li>`).join(''); coverDraw($('#face-invalid-thumb').getContext('2d'), canvas, 240, 240); return; }
+        zoneSession.face = res; zoneSession.faceCanvas = canvas; zoneSession.faceStep = false; finishZones(); return;
+      }
       wipeSession(); current = { mode: 'face', face: res, canvas: canvas, ts: Date.now() };
       renderFace();
     } catch (e) {
       console.warn('face analysis failed', e);
+      if (zonesMode && zoneSession && zoneSession.faceStep) { toast('얼굴 분석 도구를 불러오지 못해 부위별 결과만 보여드려요'); zoneSession.faceStep = false; zoneSession.withFace = false; finishZones(); return; }
       toast('얼굴 분석 도구를 불러오지 못했어요. 인터넷 연결을 확인해 주세요');
       show('face-intro');
     } finally { busy = false; $('#screen-analyzing').classList.remove('face'); }
@@ -660,8 +674,9 @@
     return { type: f.type.key, tLevel: f.tLevel, uLevel: f.uLevel, redLevel: redLevel, redZones: redZones, texture: f.texture };
   }
   const recCard = $('#rec-card'), recHome = { parent: recCard.parentNode, next: recCard.nextSibling };
-  function moveRecCard(toFace) {
-    if (toFace) { if (recCard.parentNode !== $('#face-rec-slot')) $('#face-rec-slot').appendChild(recCard); }
+  function moveRecCard(to) {
+    const slot = to === true ? $('#face-rec-slot') : typeof to === 'string' ? $(to) : null;
+    if (slot) { if (recCard.parentNode !== slot) slot.appendChild(recCard); }
     else if (recCard.parentNode !== recHome.parent) recHome.parent.insertBefore(recCard, recHome.next);
   }
   const SHINE_COL = ['#b9ad97', '#c4a050', '#a87a2c'], RED_COL = ['#c9a79c', '#b97b6b', '#a3604f'];
@@ -700,8 +715,8 @@
     oil: '진한 골드색일수록 빛 반사(광택)가 많은 구역이에요. 밝은 점은 유분 광택으로 보이는 지점이에요.',
     zones: '자동으로 찾은 분석 구역이에요. 번호는 아래 상세 표와 같아요.',
   };
-  function drawFaceMap(x, W, H, layer) {
-    const f = current.face, c = current.canvas, g = f.geometry.box;
+  function drawFaceMap(x, W, H, layer, f0, c0) {
+    const f = f0 || current.face, c = c0 || current.canvas, g = f.geometry.box;
     let ch = Math.max(g[3] * 1.3, g[2] * 1.5 * H / W), cw = ch * W / H;
     const sx = g[0] + g[2] / 2 - cw / 2, sy = g[1] + g[3] * 0.48 - ch / 2, k = W / cw;
     x.fillStyle = '#efe9e4'; x.fillRect(0, 0, W, H);
@@ -779,12 +794,244 @@
   $('#btn-fi-home').onclick = () => { exitFaceMode(); show('intro'); };
   $('#btn-fi-close').onclick = () => { exitFaceMode(); show('intro'); };
   $('#btn-face-cam').onclick = startFaceCamera;
-  $('#btn-face-retake').onclick = startFaceCamera;
+  $('#btn-face-retake').onclick = () => { startFaceCamera(); if (zonesMode) $('#screen-camera').classList.add('zone-mode'); };
+  $('#btn-face-zskip').onclick = () => { if (zoneSession) { zoneSession.faceStep = false; zoneSession.withFace = false; finishZones(); } };
   $('#btn-face-again').onclick = () => openFaceIntro();
   $('#btn-face-home').onclick = () => { exitFaceMode(); show('intro'); };
   $('#btn-face-next').onclick = nextCustomer;
   $('#btn-face-share').onclick = shareResult;
   $('#face-layers').onclick = (e) => { const l = e.target.dataset && e.target.dataset.layer; if (l) setFaceLayer(l); };
+
+  // ---------- 부위별 종합 측정 (여러 부위를 차례로 가까이 촬영 · 기존 피부결 엔진 + 색 기반 붉은기/유분) ----------
+  const ZONE_DEF = [
+    { key: 'forehead', name: '이마', tip: '이마 가운데를 사각형 안에', w: 1, tz: 'T' },
+    { key: 'cheekL', name: '왼쪽 볼', tip: '왼쪽 볼(내 얼굴 기준)을 사각형 안에', w: 1.2, tz: 'U' },
+    { key: 'cheekR', name: '오른쪽 볼', tip: '오른쪽 볼(내 얼굴 기준)을 사각형 안에', w: 1.2, tz: 'U' },
+    { key: 'nose', name: '코', tip: '콧등과 코 옆을 사각형 안에', w: 0.8, tz: 'T' },
+    { key: 'chin', name: '턱', tip: '턱 끝을 사각형 안에', w: 0.8, tz: 'U' },
+    { key: 'eye', name: '눈가', tip: '눈꼬리 옆 피부를 사각형 안에 (눈은 피해서)', w: 0.6, tz: null },
+  ];
+  // 마주 본 얼굴 기준 도식 좌표 [cx, cy, rx, ry] (내 얼굴 왼쪽 볼은 그림의 오른쪽)
+  const ZONE_GEO = { forehead: [0.5, 0.25, 0.19, 0.075], nose: [0.5, 0.5, 0.065, 0.11], cheekL: [0.71, 0.6, 0.11, 0.085], cheekR: [0.29, 0.6, 0.11, 0.085], chin: [0.5, 0.835, 0.1, 0.05], eye: [0.7, 0.41, 0.065, 0.033] };
+  let zonesMode = false, zoneSession = null;
+  function zoneSteps() { return zoneSession ? zoneSession.steps : ZONE_DEF.slice(0, 5); }
+  function zoneSVG(active, doneKeys, all) {
+    const keys = all || ZONE_DEF.map((z) => z.key);
+    const zs = keys.map((k) => { const g = ZONE_GEO[k], on = k === active, done = doneKeys && doneKeys.indexOf(k) >= 0;
+      return `<ellipse cx="${g[0] * 100}" cy="${g[1] * 112}" rx="${g[2] * 100}" ry="${g[3] * 112}" fill="${on ? '#a9796d' : done ? '#5f7d72' : 'none'}" fill-opacity="${on ? 0.85 : done ? 0.45 : 0}" stroke="${on ? '#a9796d' : 'currentColor'}" stroke-opacity="${on ? 1 : 0.45}" stroke-width="1"${on || done ? '' : ' stroke-dasharray="2 2"'}/>`; }).join('');
+    return `<svg viewBox="0 0 100 112" aria-hidden="true"><ellipse cx="50" cy="59" rx="36" ry="50" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="1"/><path d="M33 41q6-3 12 0M55 41q6-3 12 0M42 78q8 4 16 0" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1" stroke-linecap="round"/>${zs}</svg>`;
+  }
+  function openZonesIntro() {
+    exitFaceMode(); wipeSession(); // 이전 결과는 새 측정을 시작하면 지움
+    show('zones-intro');
+    const sup = faceSupported();
+    $('#zi-face').disabled = !sup; $('#zi-face').checked = false; $('#zi-face-wrap').classList.toggle('off', !sup); $('#zi-face-note').hidden = sup;
+    $('#zi-eye').checked = false;
+    renderZonesIntroSteps();
+  }
+  function renderZonesIntroSteps() {
+    const keys = ZONE_DEF.filter((z) => z.key !== 'eye' || $('#zi-eye').checked).map((z) => z.key);
+    $('#zi-ill').innerHTML = zoneSVG(null, keys, keys);
+    $('#zi-steps').innerHTML = ZONE_DEF.filter((z) => keys.indexOf(z.key) >= 0).map((z) => `<li>${esc(z.name)}</li>`).join('') + ($('#zi-face').checked ? '<li>얼굴 전체 <small>Beta</small></li>' : '');
+  }
+  // 반드시 탭 핸들러에서 직접 호출 (카메라 권한)
+  function startZones() {
+    const steps = ZONE_DEF.filter((z) => z.key !== 'eye' || $('#zi-eye').checked);
+    zoneSession = { steps, idx: 0, res: {}, face: null, faceCanvas: null, withFace: $('#zi-face').checked && faceSupported(), faceStep: false };
+    if (zoneSession.withFace) loadFaceTools().catch(() => {}); // 미리 내려받기 (실패하면 얼굴 단계 건너뜀)
+    startZoneStep();
+  }
+  function zoneTotal() { return zoneSession.steps.length + (zoneSession.withFace ? 1 : 0); }
+  function zoneDots(el) {
+    const s = zoneSession; let h = '';
+    s.steps.forEach((z, i) => { const r = s.res[z.key]; h += `<i class="${i === s.idx && !s.faceStep ? 'cur' : r ? (r.status === 'ok' ? 'ok' : 'skip') : ''}"></i>`; });
+    if (s.withFace) h += `<i class="${s.faceStep ? 'cur' : s.face ? 'ok' : ''}"></i>`;
+    el.innerHTML = h;
+  }
+  function startZoneStep() {
+    const s = zoneSession, z = s.steps[s.idx];
+    zonesMode = true; s.faceStep = false; faceMode = false; facing = 'environment';
+    const cam = $('#screen-camera'); cam.classList.remove('face-mode'); cam.classList.add('zone-mode');
+    $('#zone-step').textContent = `${s.idx + 1} / ${zoneTotal()}`; $('#zone-name').textContent = z.name;
+    $('#zone-ill').innerHTML = zoneSVG(z.key, Object.keys(s.res).filter((k) => s.res[k].status === 'ok'), s.steps.map((q) => q.key));
+    zoneDots($('#zone-dots'));
+    $('#guide-tip').textContent = z.tip; $('#btn-zone-skip').hidden = false; $('#btn-zone-skip').textContent = '이 부위 건너뛰기';
+    $('#cam-hint').textContent = '약 10cm 거리에서 초점이 맞으면 촬영하세요';
+    startCamera();
+  }
+  function startZoneFaceStep() {
+    const s = zoneSession; s.faceStep = true; zonesMode = true;
+    $('#zone-step').textContent = `${zoneTotal()} / ${zoneTotal()}`; $('#zone-name').textContent = '얼굴 전체';
+    $('#zone-ill').innerHTML = zoneSVG(null, s.steps.map((q) => q.key), s.steps.map((q) => q.key)); zoneDots($('#zone-dots'));
+    $('#btn-zone-skip').hidden = false; $('#btn-zone-skip').textContent = '얼굴 전체 건너뛰고 결과 보기';
+    startFaceCamera(); $('#screen-camera').classList.add('zone-mode');
+  }
+  function exitZonesMode() { zonesMode = false; $('#screen-camera').classList.remove('zone-mode'); $('#guide-tip').textContent = '볼 또는 이마를 사각형 안에'; }
+  function colorStats(canvas) {
+    const N = SA.WORK, d = canvas.getContext('2d').getImageData(0, 0, N, N).data, Ls = [], As = [], Cs = [];
+    for (let y = 2; y < N; y += 3) for (let x = 2; x < N; x += 3) { const i = (y * N + x) * 4, q = REC.srgbToLab(d[i], d[i + 1], d[i + 2]); Ls.push(q.L); As.push(q.a); Cs.push(Math.sqrt(q.a * q.a + q.b * q.b)); }
+    const med = (v) => { const t = v.slice().sort((a, b) => a - b); return t[t.length >> 1]; };
+    const mL = med(Ls), mC = med(Cs), sd = Math.sqrt(Ls.reduce((s, v) => s + (v - mL) * (v - mL), 0) / Ls.length);
+    const thr = Math.min(97, mL + Math.max(7, 1.3 * sd)); let n = 0;
+    for (let i = 0; i < Ls.length; i++) if (Ls[i] >= thr && Cs[i] <= 0.85 * mC) n++;
+    return { a: med(As), L: mL, shine: Math.round(n / Ls.length * 1000) / 10 };
+  }
+  function captureZone() {
+    const v = $('#video'); if (!v.videoWidth) return toast('카메라가 준비 중이에요');
+    const r = guideRectInVideo();
+    const c = makeWorkCanvas((ctx, N) => ctx.drawImage(v, r.sx, r.sy, r.size, r.size, 0, 0, N, N));
+    stopCamera(); runZone(c);
+  }
+  async function runZone(canvas) {
+    if (busy || !zoneSession) return; busy = true;
+    try {
+      const s = zoneSession, z = s.steps[s.idx];
+      show('analyzing'); $('#analyze-title').textContent = `${z.name} 피부를 분석하고 있어요`; $('#analyze-dl').hidden = true;
+      $('#scan-canvas').getContext('2d').drawImage(canvas, 0, 0, 360, 360);
+      $('#analyze-step').textContent = '피부결 · 모공 · 잔주름 · 색 분석 중…'; await sleep(60);
+      const result = SA.analyzeRGBA(canvas.getContext('2d').getImageData(0, 0, SA.WORK, SA.WORK).data, SA.WORK);
+      const color = result.invalid ? null : colorStats(canvas);
+      await sleep(350);
+      s.res[z.key] = { status: result.invalid ? 'invalid' : 'ok', result, canvas, color };
+      renderZoneStep();
+    } finally { busy = false; }
+  }
+  function renderZoneStep() {
+    const s = zoneSession, z = s.steps[s.idx], r = s.res[z.key], ok = r.status === 'ok';
+    show('zone-step');
+    $('#zs-prog').textContent = `${s.idx + 1} / ${zoneTotal()}`; $('#zs-label').textContent = `${s.idx + 1} / ${zoneTotal()} 단계`; $('#zs-name').textContent = z.name;
+    $('#zs-thumb').getContext('2d').drawImage(r.canvas, 0, 0, 240, 240);
+    $('#screen-zone-step').classList.toggle('invalid', !ok);
+    if (ok) {
+      const sc = r.result.scores;
+      $('#zs-sum').innerHTML = `<em class="zs-score">${sc.overall}</em> ${esc(label(sc.overall))}`;
+      $('#zs-metrics').innerHTML = METRICS.map((m) => `<div class="zs-m"><span>${m.name}</span><div class="bar-bg"><div class="bar-fg" style="width:${sc[m.key]}%;background:${toneOf(sc[m.key])}"></div></div><em>${sc[m.key]}</em></div>`).join('') + `<p class="zs-color">광택 ${r.color.shine}% · 붉은기와 유분은 다른 부위와 비교해 종합 결과에 반영돼요</p>`;
+      $('#zs-reasons').hidden = true;
+    } else {
+      $('#zs-sum').textContent = '측정할 수 없는 사진이에요';
+      $('#zs-metrics').innerHTML = '';
+      $('#zs-reasons').hidden = false; $('#zs-reasons').innerHTML = r.result.blockers.map((b) => `<li>${esc(b)}</li>`).join('');
+    }
+    const last = s.idx === s.steps.length - 1, nextName = last ? (s.withFace ? '얼굴 전체' : null) : s.steps[s.idx + 1].name;
+    const nb = $('#btn-zs-next'); nb.hidden = !ok; nb.textContent = nextName ? `다음: ${nextName}` : '종합 결과 보기';
+    $('#btn-zs-skip').textContent = ok ? '이 부위 제외' : '건너뛰기';
+    $('#btn-zs-retake').className = ok ? 'btn ghost' : 'btn primary';
+    zoneDots($('#zs-dots'));
+  }
+  function zoneAdvance() {
+    const s = zoneSession; if (!s) return;
+    if (s.idx < s.steps.length - 1) { s.idx++; return startZoneStep(); }
+    if (s.withFace && !s.face) { if (faceSupported()) return startZoneFaceStep(); }
+    finishZones();
+  }
+  function zoneSkip() {
+    const s = zoneSession; if (!s) return;
+    if (s.faceStep) { stopCamera(); exitFaceMode(); s.faceStep = false; s.withFace = false; return finishZones(); }
+    s.res[s.steps[s.idx].key] = { status: 'skipped' };
+    stopCamera(); zoneAdvance();
+  }
+  function zoneSummary(s) {
+    const zones = s.steps.map((d) => { const r = s.res[d.key] || { status: 'skipped' };
+      return { key: d.key, name: d.name, w: d.w, tz: d.tz, status: r.status === 'ok' ? 'ok' : r.status === 'invalid' ? 'invalid' : 'skipped', scores: r.result && !r.result.invalid ? r.result.scores : null, grade: r.result && r.result.grade, warnings: r.result && !r.result.invalid ? r.result.warnings : [], color: r.color, canvas: r.canvas, viz: r.result && r.result.viz, rgb: r.result && r.result.raw && r.result.raw.rgb }; });
+    const ok = zones.filter((z) => z.status === 'ok');
+    if (!ok.length) return null;
+    const W = ok.reduce((t, z) => t + z.w, 0), wavg = (k) => Math.round(ok.reduce((t, z) => t + z.w * z.scores[k], 0) / W);
+    const agg = { smooth: wavg('smooth'), pore: wavg('pore'), lines: wavg('lines'), overall: wavg('overall') };
+    const as = ok.map((z) => z.color.a).sort((a, b) => a - b), medA = as[as.length >> 1];
+    ok.forEach((z) => { z.redRel = Math.round((z.color.a - medA) * 10) / 10; z.redLevel = z.redRel < 1.5 ? 0 : z.redRel < 3.5 ? 1 : 2; z.shine = z.color.shine; z.shineLevel = z.shine < REC.SHINE_T[0] ? 0 : z.shine < REC.SHINE_T[1] ? 1 : 2; });
+    const mean = (arr) => arr.length ? Math.round(arr.reduce((t, v) => t + v, 0) / arr.length * 10) / 10 : null;
+    let T = mean(ok.filter((z) => z.tz === 'T').map((z) => z.shine)), U = mean(ok.filter((z) => z.tz === 'U').map((z) => z.shine)), typeSrc = 'zones';
+    const f = s.face && !s.face.invalid ? s.face : null;
+    if (f) { T = f.tShine; U = f.uShine; typeSrc = 'face'; }
+    const lv = (v) => v == null ? 0 : v < REC.SHINE_T[0] ? 0 : v < REC.SHINE_T[1] ? 1 : 2;
+    const type = T != null && U != null ? REC.skinTypeTU(T, U) : T != null ? REC.skinTypeTU(T, T / 2) : U != null ? REC.skinTypeTU(U, U) : { key: 'drynormal', name: '건성·중성 경향' };
+    const cheeks = ok.filter((z) => z.key === 'cheekL' || z.key === 'cheekR');
+    let redLevel = cheeks.length ? Math.max.apply(null, cheeks.map((z) => z.redLevel)) : 0;
+    if (f) { const fi0 = faceRecInput(f); redLevel = Math.max(redLevel, fi0.redLevel); }
+    const fi = { type: type.key, tLevel: lv(T), uLevel: lv(U), redLevel, redZones: ok.filter((z) => z.redLevel === 2 && z.tz === 'T').map((z) => z.name), texture: null };
+    const sorted = ok.slice().sort((a, b) => b.scores.overall - a.scores.overall);
+    const rgbSrc = cheeks.length ? cheeks : ok, skinRGB = f ? f.skinRGB : [0, 1, 2].map((i) => rgbSrc.reduce((t, z) => t + z.rgb[i], 0) / rgbSrc.length);
+    const warnings = [];
+    ok.forEach((z) => z.warnings.forEach((w) => warnings.push(`${z.name}: ${w}`)));
+    if (f && f.warnings) f.warnings.forEach((w) => warnings.push(`얼굴 전체: ${w}`));
+    return { zones, ok, agg, overall: agg.overall, grade: SA.gradeOf(agg.overall), best: sorted[0], worst: sorted[sorted.length - 1], T, U, type, typeSrc, fi, skinRGB, warnings, face: f, faceCanvas: f ? s.faceCanvas : null, skipped: zones.filter((z) => z.status !== 'ok').length };
+  }
+  function finishZones() {
+    const s = zoneSession; if (!s) return;
+    const sum = zoneSummary(s);
+    stopCamera(); exitFaceMode(); exitZonesMode();
+    if (!sum) { toast('측정된 부위가 없어요. 한 부위 이상 촬영해 주세요'); zoneSession = null; return openZonesIntro(); }
+    wipeSession();
+    current = { mode: 'zones', zones: sum, ts: Date.now() };
+    renderZones();
+  }
+  function drawZoneDiagram(x, W, H, sum) {
+    x.fillStyle = '#f6f2ee'; x.fillRect(0, 0, W, H);
+    const k = Math.min(W / 100, H / 112), ox = (W - 100 * k) / 2, oy = (H - 112 * k) / 2, P = (gx, gy) => [ox + gx * 100 * k, oy + gy * 112 * k];
+    x.save(); x.beginPath(); x.ellipse(ox + 50 * k, oy + 59 * k, 36 * k, 50 * k, 0, 0, 7); x.fillStyle = '#fdfbf9'; x.fill(); x.strokeStyle = 'rgba(43,37,35,.25)'; x.lineWidth = Math.max(1, k * 0.35); x.stroke();
+    x.strokeStyle = 'rgba(43,37,35,.18)'; x.lineCap = 'round'; x.beginPath(); x.moveTo(ox + 33 * k, oy + 41 * k); x.quadraticCurveTo(ox + 39 * k, oy + 38 * k, ox + 45 * k, oy + 41 * k); x.moveTo(ox + 55 * k, oy + 41 * k); x.quadraticCurveTo(ox + 61 * k, oy + 38 * k, ox + 67 * k, oy + 41 * k); x.moveTo(ox + 42 * k, oy + 78 * k); x.quadraticCurveTo(ox + 50 * k, oy + 82 * k, ox + 58 * k, oy + 78 * k); x.stroke(); x.restore();
+    const F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif', SERIF = '"Cormorant Garamond", Georgia, serif';
+    sum.zones.forEach((z) => {
+      const g = ZONE_GEO[z.key], c = P(g[0], g[1]), rx = g[2] * 100 * k, ry = g[3] * 112 * k;
+      x.beginPath(); x.ellipse(c[0], c[1], rx, ry, 0, 0, 7);
+      if (z.status === 'ok') { x.fillStyle = toneOf(z.scores.overall); x.globalAlpha = 0.5; x.fill(); x.globalAlpha = 1; x.strokeStyle = toneOf(z.scores.overall); x.setLineDash([]); }
+      else { x.strokeStyle = 'rgba(43,37,35,.35)'; x.setLineDash([k * 1.2, k * 1.2]); }
+      x.lineWidth = Math.max(1, k * 0.4); x.stroke(); x.setLineDash([]);
+      x.textAlign = 'center'; x.fillStyle = '#2b2523';
+      const small = z.key === 'eye';
+      x.font = `500 ${Math.round(k * (small ? 5.5 : 8))}px ${SERIF}`; x.textBaseline = 'middle';
+      x.fillText(z.status === 'ok' ? String(z.scores.overall) : '—', c[0], c[1] + k * 0.3);
+      x.font = `600 ${Math.round(k * 3.4)}px ${F}`; x.fillStyle = '#6f6560'; x.textBaseline = 'alphabetic';
+      const ly = z.key === 'forehead' ? c[1] - ry - k * 1.6 : c[1] + ry + k * 4.2;
+      x.fillText(z.name + (z.status === 'ok' ? '' : z.status === 'invalid' ? ' (측정 불가)' : ' (건너뜀)'), c[0], ly);
+    });
+    x.textAlign = 'left';
+  }
+  function renderZones() {
+    const S = current.zones;
+    show('zones');
+    $('#zr-date').textContent = fmtDate(current.ts);
+    $('#zr-overall').textContent = S.overall;
+    $('#zr-ring').setAttribute('aria-label', `부위별 종합 점수 ${S.overall}점, 등급 ${S.grade.key} ${S.grade.label}`);
+    $('#zr-grade').textContent = S.grade.key; $('#zr-grade-label').textContent = S.grade.label; $('#zr-grade-desc').textContent = S.grade.desc;
+    const bar = $('#zr-ring-bar'); bar.style.stroke = TONE.ink; bar.style.strokeDashoffset = 326.7;
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.strokeDashoffset = 326.7 * (1 - S.overall / 100); }));
+    $('#zr-count').textContent = `${S.zones.length}개 부위 중 ${S.ok.length}개 측정${S.skipped ? ` · ${S.skipped}개 제외` : ''} · 부위별 가중 평균`;
+    $('#zr-best').innerHTML = S.ok.length > 1
+      ? `<div><span class="rec-label">가장 좋은 부위</span><b>${esc(S.best.name)}</b><em>${S.best.scores.overall}</em></div><div><span class="rec-label">관리가 필요한 부위</span><b>${esc(S.worst.name)}</b><em>${S.worst.scores.overall}</em></div>`
+      : `<div><span class="rec-label">측정한 부위</span><b>${esc(S.best.name)}</b><em>${S.best.scores.overall}</em></div>`;
+    const mc = $('#zr-map'); drawZoneDiagram(mc.getContext('2d'), mc.width, mc.height, S);
+    $('#zr-list').innerHTML = S.zones.map((z) => {
+      if (z.status !== 'ok') return `<div class="zr-row miss"><span class="zr-n">${esc(z.name)}</span><small>${z.status === 'invalid' ? '측정할 수 없는 사진이라 제외했어요' : '건너뛰었어요'}</small></div>`;
+      const sc = z.scores;
+      return `<div class="zr-row"><span class="zr-n">${esc(z.name)}</span><em class="zr-s" style="color:${toneOf(sc.overall)}">${sc.overall}</em>
+        <div class="zr-m">${METRICS.map((m) => `<span>${m.name} <b>${sc[m.key]}</b></span>`).join('')}</div>
+        <div class="zr-c"><span>붉은기 <b>${LV[z.redLevel]}</b> <small>${z.redRel > 0 ? '+' : ''}${z.redRel}</small></span><span>유분 <b>${LV[z.shineLevel]}</b> <small>${z.shine}%</small></span></div></div>`;
+    }).join('');
+    $('#zr-type').textContent = S.type.name;
+    $('#zr-tu').innerHTML = (S.T != null ? tuRow('T존 유분', S.T, S.fi.tLevel) : '') + (S.U != null ? tuRow('U존 유분', S.U, S.fi.uLevel) : '');
+    $('#zr-type-note').textContent = S.typeSrc === 'face' ? '얼굴 전체 사진의 T존(이마·코)과 U존(볼·턱) 광택을 비교했어요.' : 'T존(이마·코)과 U존(볼·턱) 사진의 광택을 비교했어요. 부위마다 조명이 조금씩 달라질 수 있어 참고용이에요.';
+    const fc = $('#zr-face'); fc.hidden = !S.face;
+    if (S.face) { const cv = $('#zr-face-map'); drawFaceMap(cv.getContext('2d'), cv.width, cv.height, 'red', S.face, S.faceCanvas); $('#zr-face-sum').textContent = `${S.face.type.name} · ${S.face.summary}`; }
+    const w = $('#zr-warn'); w.hidden = !S.warnings.length;
+    w.innerHTML = '<b class="warn-title">촬영 참고</b>' + S.warnings.map((x) => `<p>${esc(x)}</p>`).join('');
+    moveRecCard('#zones-rec-slot');
+    renderRecs();
+  }
+  $('#btn-zones-mode').onclick = openZonesIntro;
+  $('#btn-mode-quick').onclick = () => { const g = $('#btn-start'); try { g.focus(); } catch (e) {} };
+  $('#zi-eye').onchange = renderZonesIntroSteps; $('#zi-face').onchange = renderZonesIntroSteps;
+  $('#btn-zi-home').onclick = () => show('intro');
+  $('#btn-zones-start').onclick = startZones;
+  $('#btn-zone-skip').onclick = zoneSkip;
+  $('#btn-zs-next').onclick = zoneAdvance;
+  $('#btn-zs-retake').onclick = () => { if (zoneSession) startZoneStep(); };
+  $('#btn-zs-skip').onclick = () => { const s = zoneSession; if (!s) return; s.res[s.steps[s.idx].key] = { status: 'skipped' }; zoneAdvance(); };
+  $('#btn-zs-home').onclick = () => show('intro');
+  $('#btn-zr-home').onclick = () => show('intro');
+  $('#btn-zones-next').onclick = nextCustomer;
+  $('#btn-zones-again').onclick = () => openZonesIntro();
+  $('#btn-zones-report').onclick = () => openReport();
 
   // ---------- 전체 결과 리포트 (report.js는 필요할 때만 불러옴) ----------
   const APP_URL = 'https://handj1998-del.github.io/skin-tester/';
@@ -802,12 +1049,25 @@
   function reportData() {
     const isFace = current.mode === 'face', S = REC.SEASONS[currentSeason()];
     const d = {
-      mode: isFace ? 'face' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO,
-      title: isFace ? '얼굴 피부 분석 리포트' : '피부결 분석 리포트',
+      mode: isFace ? 'face' : current.mode === 'zones' ? 'zones' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO,
+      title: isFace ? '얼굴 피부 분석 리포트' : current.mode === 'zones' ? '부위별 종합 리포트' : '피부결 분석 리포트',
       care: current.care, makeup: current.makeup, tone: current.tone, season: S, estSeason: REC.SEASONS[current.tone.season], seasonChosen: getSeasonChoice() !== 'auto',
       skinRGB: current.skinRGB.map((v) => Math.round(v)),
     };
-    if (isFace) {
+    if (current.mode === 'zones') {
+      const Z = current.zones;
+      d.overall = Z.overall; d.grade = Z.grade; d.warnings = Z.warnings.slice();
+      d.best = { name: Z.best.name, score: Z.best.scores.overall }; d.worst = { name: Z.worst.name, score: Z.worst.scores.overall };
+      d.count = `${Z.ok.length} / ${Z.zones.length}곳`; d.single = Z.ok.length < 2;
+      const mc = mk(900, 1013); drawZoneDiagram(mc.getContext('2d'), 900, 1013, Z); d.map = mc;
+      d.thumbs = Z.ok.map((z) => { const c = mk(480, 480); c.getContext('2d').drawImage(z.canvas, 0, 0, 480, 480); return { canvas: c, title: `${z.name} · ${z.scores.overall}점`, caption: `매끄러움 ${z.scores.smooth} · 모공 ${z.scores.pore} · 잔주름 ${z.scores.lines}` }; });
+      d.rows = Z.zones.map((z) => z.status !== 'ok' ? { name: z.name, ok: false, missText: z.status === 'invalid' ? '측정할 수 없는 사진이라 제외' : '건너뜀' }
+        : { name: z.name, ok: true, overall: z.scores.overall, label: label(z.scores.overall), color: toneOf(z.scores.overall), smooth: z.scores.smooth, pore: z.scores.pore, lines: z.scores.lines, red: LV[z.redLevel], redRel: (z.redRel > 0 ? '+' : '') + z.redRel, shine: LV[z.shineLevel], shinePct: z.shine + '%' });
+      d.type = Z.type; d.typeNote = Z.typeSrc === 'face' ? '얼굴 전체 사진의 T존(이마·코)과 U존(볼·턱) 광택을 비교했어요.' : 'T존(이마·코)과 U존(볼·턱) 사진의 광택을 비교한 참고값이에요.';
+      d.tu = []; if (Z.T != null) d.tu.push({ label: 'T존 유분 (이마·코)', v: Z.T, level: LV[Z.fi.tLevel], color: SHINE_COL[Z.fi.tLevel] }); if (Z.U != null) d.tu.push({ label: 'U존 유분 (볼·턱)', v: Z.U, level: LV[Z.fi.uLevel], color: SHINE_COL[Z.fi.uLevel] });
+      if (Z.face) { d.faceImages = [['red', '붉은기 지도', FACE_LEGEND.red], ['oil', '유분(광택) 지도', FACE_LEGEND.oil]].map((q) => { const c = mk(600, 720); drawFaceMap(c.getContext('2d'), 600, 720, q[0], Z.face, Z.faceCanvas); return { canvas: c, title: q[1], caption: q[2] }; }); d.faceSummary = `${Z.face.type.name} · ${Z.face.summary}`; }
+      d.disclaimer = '부위별 결과는 같은 조명에서 찍은 부위끼리의 상대 비교이며 조명·거리·초점·카메라 기종에 따라 달라질 수 있어요. 의학적 진단이 아닙니다. 피부 질환이 의심되면 전문의와 상담하세요.';
+    } else if (isFace) {
       const f = current.face;
       d.type = f.type; d.summary = f.summary; d.warnings = f.warnings.slice();
       d.tu = [{ label: 'T존 유분 (이마·코)', v: f.tShine, level: LV[f.tLevel], color: SHINE_COL[f.tLevel] }, { label: '볼 유분 (U존)', v: f.uShine, level: LV[f.uLevel], color: SHINE_COL[f.uLevel] }];
@@ -824,7 +1084,7 @@
     }
     return d;
   }
-  function reportFileBase() { const d = new Date(current.ts); return `HOW_${current.mode === 'face' ? '얼굴분석' : '피부결'}_리포트_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`; }
+  function reportFileBase() { const d = new Date(current.ts); return `HOW_${current.mode === 'face' ? '얼굴분석' : current.mode === 'zones' ? '부위별종합' : '피부결'}_리포트_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}_${String(d.getHours()).padStart(2, '0')}${String(d.getMinutes()).padStart(2, '0')}`; }
   async function buildReport() {
     const R = await loadReportLib();
     try { await Promise.all([document.fonts.load('300 110px "Cormorant Garamond"'), document.fonts.load('500 24px "Cormorant Garamond"')]); } catch (e) {}
@@ -836,7 +1096,7 @@
     return reportPages;
   }
   async function openReport() {
-    if (!current || (current.mode === 'face' ? current.face.invalid : current.result.invalid)) return;
+    if (!current || (current.mode === 'face' ? current.face.invalid : current.mode === 'zones' ? !current.zones : current.result.invalid)) return;
     show('report');
     $('#rep-date').textContent = fmtDate(current.ts);
     $('#rep-name').value = reportName;
@@ -876,7 +1136,7 @@
   }
   $('#btn-report').onclick = openReport;
   $('#btn-face-report').onclick = openReport;
-  $('#btn-rep-back').onclick = () => { if (current) show(current.mode === 'face' ? 'face' : 'result'); else show('intro'); };
+  $('#btn-rep-back').onclick = () => { if (current) show(current.mode === 'face' ? 'face' : current.mode === 'zones' ? 'zones' : 'result'); else show('intro'); };
   $('#btn-rep-pdf').onclick = () => reportAction('#btn-rep-pdf', 'PDF 만드는 중…', saveReportPdf);
   $('#btn-rep-img').onclick = () => reportAction('#btn-rep-img', '이미지 만드는 중…', saveReportImage);
   $('#btn-rep-share').onclick = () => reportAction('#btn-rep-share', '준비 중…', shareReport);
@@ -893,7 +1153,7 @@
     const t = stream && stream.getVideoTracks()[0]; if (!t) return;
     torchOn = !torchOn; try { await t.applyConstraints({ advanced: [{ torch: torchOn }] }); } catch (e) { torchOn = false; toast('조명을 켤 수 없어요'); }
   };
-  $('#btn-cam-close').onclick = $('#btn-cam-back').onclick = () => { stopCamera(); if (faceMode) show('face-intro'); else show('intro'); };
+  $('#btn-cam-close').onclick = $('#btn-cam-back').onclick = () => { stopCamera(); if (zonesMode && zoneSession) { const s = zoneSession, r = s.res[s.steps[s.idx].key]; if (s.faceStep) { exitFaceMode(); $('#screen-camera').classList.add('zone-mode'); s.faceStep = false; return finishZones(); } if (r) return renderZoneStep(); exitZonesMode(); return openZonesIntro(); } if (faceMode) show('face-intro'); else show('intro'); };
   ['#file-input', '#file-input2', '#file-input3', '#face-file'].forEach((id) => { const el = $(id); if (el) el.onchange = onFile; });
   $('#btn-copy-link').onclick = copyLink;
   $('#btn-cam-retry').onclick = startCamera;
@@ -974,6 +1234,22 @@
     reportPages: () => reportPages && reportPages.length,
     state: () => ({ current: !!current, season: seasonChoice, name: reportName, ls: (() => { try { return Object.keys(localStorage); } catch (e) { return []; } })() }),
     setSeason: (v) => { setSeasonChoice(v); },
+    async zonesRun(urls, faceUrl, eye) {
+      openZonesIntro(); $('#zi-eye').checked = !!eye; $('#zi-face').checked = !!faceUrl && faceSupported();
+      const steps = ZONE_DEF.filter((z) => z.key !== 'eye' || eye);
+      zoneSession = { steps, idx: 0, res: {}, face: null, faceCanvas: null, withFace: !!faceUrl && faceSupported(), faceStep: false }; zonesMode = true;
+      for (let i = 0; i < steps.length; i++) {
+        zoneSession.idx = i;
+        if (urls[i]) { const im = await loadImage(urls[i]); await runZone(await fromImage(im)); } else zoneSession.res[steps[i].key] = { status: 'skipped' };
+      }
+      if (zoneSession.withFace) { zoneSession.faceStep = true; const im = await loadImage(faceUrl); await runFace(fromFaceImage(im), true); }
+      else finishZones();
+      if (!current || current.mode !== 'zones') return null;
+      const Z = current.zones;
+      return { overall: Z.overall, grade: Z.grade.key, best: Z.best.name, worst: Z.worst.name, type: Z.type.name, T: Z.T, U: Z.U, typeSrc: Z.typeSrc, face: !!Z.face, skipped: Z.skipped,
+        zones: Z.zones.map((z) => ({ key: z.key, status: z.status, overall: z.scores && z.scores.overall, red: z.redLevel, redRel: z.redRel, shine: z.shine })), care: current.care.priorityName, headline: current.care.headline, tips: current.care.zoneTips, finish: current.makeup.finish };
+    },
+    zoneStepOnly: async (url, i) => { if (!zoneSession) { openZonesIntro(); zoneSession = { steps: ZONE_DEF.slice(0, 5), idx: 0, res: {}, face: null, withFace: false, faceStep: false }; zonesMode = true; } zoneSession.idx = i || 0; const im = await loadImage(url); await runZone(await fromImage(im)); return zoneSession.res[zoneSession.steps[zoneSession.idx].key].status; },
     async faceUrl(url) { const im = await loadImage(url); await runFace(fromFaceImage(im), true); const f = current.face; return f.invalid ? { invalid: true, blockers: f.blockers } : { type: f.type, summary: f.summary, t: f.tShine, u: f.uShine, compact: window.HowFaceAnalyze.compact(f), care: current.care.priorityName, finish: current.makeup.finish, season: current.tone.season }; },
   };
 })();

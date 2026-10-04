@@ -201,11 +201,11 @@
     x.fillStyle = SOFT; x.fillRect(0, 0, W, 560);
     if (L && L.naturalWidth) { var lw = 230, lh = lw * L.naturalHeight / L.naturalWidth; x.drawImage(L, W / 2 - lw / 2, y, lw, lh); y += lh; }
     else { font(x, 600, 64); x.fillStyle = INK; x.textAlign = 'center'; x.fillText('H.O.W', W / 2, y + 60); x.textAlign = 'left'; y += 70; }
-    font(x, 600, 17); x.fillStyle = ACC; x.textAlign = 'center'; spaced(x, d.mode === 'face' ? 'FACE SKIN REPORT' : 'SKIN TEXTURE REPORT', W / 2, y + 62, 6, 'center');
+    font(x, 600, 17); x.fillStyle = ACC; x.textAlign = 'center'; spaced(x, d.mode === 'face' ? 'FACE SKIN REPORT' : d.mode === 'zones' ? 'ZONE SKIN REPORT' : 'SKIN TEXTURE REPORT', W / 2, y + 62, 6, 'center');
     font(x, 600, 46); x.fillStyle = INK; x.fillText(d.title, W / 2, y + 128);
     x.fillStyle = ACC; x.fillRect(W / 2 - 24, y + 156, 48, 2); x.textAlign = 'left';
     // 메타 정보
-    var metas = [['이름', d.name || '—'], ['측정 일시', fmtFull(d.ts)], ['측정 방식', d.mode === 'face' ? '얼굴 전체 분석 (Beta)' : '가까이 촬영 · 피부결']];
+    var metas = [['이름', d.name || '—'], ['측정 일시', fmtFull(d.ts)], ['측정 방식', d.mode === 'face' ? '얼굴 전체 분석 (Beta)' : d.mode === 'zones' ? '부위별 종합 측정' : '가까이 촬영 · 피부결']];
     var my = 410, mw = CW / metas.length;
     x.fillStyle = '#ffffff'; rr(x, M, my, CW, 110, 16); x.fill(); x.strokeStyle = LINE; x.lineWidth = 1.5; x.stroke();
     metas.forEach(function (m, i) {
@@ -221,7 +221,7 @@
     x.lineWidth = 12; x.strokeStyle = 'rgba(43,37,35,.08)'; x.beginPath(); x.arc(cx, cy, R, 0, 7); x.stroke();
     x.strokeStyle = INK; x.lineCap = 'round'; x.beginPath(); x.arc(cx, cy, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * d.overall / 100); x.stroke(); x.lineCap = 'butt';
     x.textAlign = 'center'; font(x, 300, 110, SERIF); x.fillStyle = INK; x.fillText(String(d.overall), cx, cy + 30);
-    font(x, 500, 19); x.fillStyle = SUB; x.fillText('피부결 점수', cx, cy + 70); x.textAlign = 'left';
+    font(x, 500, 19); x.fillStyle = SUB; x.fillText(d.mode === 'zones' ? '부위별 종합 점수' : '피부결 점수', cx, cy + 70); x.textAlign = 'left';
     var X = M + 340, w = CW - 340;
     x.fillStyle = INK; rr(x, X, y + 48, 64, 64, 32); x.fill(); font(x, 500, 36, SERIF); x.fillStyle = '#fff'; x.textAlign = 'center'; x.fillText(d.grade.key, X + 32, y + 92); x.textAlign = 'left';
     font(x, 600, 38); x.fillStyle = INK; x.fillText(d.grade.label, X + 86, y + 94);
@@ -251,6 +251,7 @@
     var am = { kicker: 'AM', title: '아침', items: c.am }, pm = { kicker: 'PM', title: '저녁', items: c.pm };
     doc.section('Skin care', '맞춤 케어 루틴', doc.calloutH([c.headline]) + doc.twoListsH(am, pm)); // 제목·요약·아침/저녁을 한 페이지에
     doc.callout('집중 영역 · ' + c.priorityName, [c.headline]);
+    if (c.zoneTips && c.zoneTips.length) { doc.sub('By zone', '부위별 포인트'); doc.list(c.zoneTips); }
     doc.twoLists(am, pm);
     doc.sub('Ingredients', '찾아볼 성분'); doc.defs(c.ingredients);
     doc.sub('Weekly', '주간 스페셜 케어'); doc.list(c.weekly);
@@ -267,7 +268,7 @@
     doc.section('Personal color', '퍼스널컬러', 420);
     var x = doc.x, y = doc.y; doc.ensure(150); x = doc.x; y = doc.y;
     x.beginPath(); x.arc(M + 50, y + 56, 46, 0, 7); x.fillStyle = 'rgb(' + d.skinRGB.join(',') + ')'; x.fill(); x.strokeStyle = LINE; x.lineWidth = 1.5; x.stroke();
-    font(x, 500, 18); x.fillStyle = MUTE; x.fillText(d.mode === 'face' ? '얼굴 피부색 기반 추정' : '사진 기반 추정', M + 130, y + 30);
+    font(x, 500, 18); x.fillStyle = MUTE; x.fillText(d.mode === 'face' ? '얼굴 피부색 기반 추정' : d.mode === 'zones' ? '부위 사진 피부색 기반 추정' : '사진 기반 추정', M + 130, y + 30);
     font(x, 600, 32); x.fillStyle = INK; x.fillText((t.undertone === 'warm' ? '웜' : '쿨') + ' 톤 · ' + E.name, M + 130, y + 74);
     font(x, 400, 20); x.fillStyle = SUB; x.fillText('신뢰도 ' + (t.confidence === 'low' ? '낮음' : '보통') + (t.neutral ? ' · 뉴트럴에 가까워요' : '') + ' · 조명과 화이트밸런스의 영향을 크게 받는 참고값', M + 130, y + 110);
     doc.y = y + 150;
@@ -292,6 +293,22 @@
       doc.section('Zones', '구역별 상세', 420);
       zoneTable(doc);
       doc.para('붉은기는 같은 얼굴의 평균 대비 값(+는 더 붉음), 유분은 구역 안의 빛 반사(광택) 비율이에요. 결 점수는 얼굴 전체 사진의 해상도 한계로 참고용이며, 정확한 피부결은 기본 측정(가까이 촬영)을 이용해 주세요.', { size: 19, color: MUTE });
+    } else if (d.mode === 'zones') {
+      closeupHero(doc);
+      zonesBest(doc);
+      doc.section('Skin type', '피부 타입 경향', 360);
+      zonesType(doc);
+      doc.section('Zone map', '부위별 지도', 640);
+      zonesMap(doc);
+      for (var ti = 0; ti < d.thumbs.length; ti += 3) doc.images(d.thumbs.slice(ti, ti + 3), 3, 1);
+      doc.section('Zones', '부위별 상세', 420);
+      zonesTable(doc);
+      doc.para('점수 기준 · 85 이상 아주 좋음 · 70 이상 좋음 · 55 이상 보통 · 40 이상 관리 필요 · 40 미만 집중 관리. 붉은기는 이번에 찍은 부위들의 중앙값 대비(+는 더 붉음), 유분은 빛 반사(광택) 비율로 같은 조명에서 찍은 부위끼리의 상대값이에요.', { size: 19, color: MUTE });
+      if (d.faceImages) {
+        doc.section('Face', '얼굴 전체 분석 (Beta)', doc.imagesH(d.faceImages, 2, 1.2));
+        doc.images(d.faceImages, 2, 1.2);
+        doc.para(d.faceSummary, { color: INK });
+      }
     } else {
       closeupHero(doc);
       doc.section('Detail', '항목별 점수', 380);
@@ -308,6 +325,69 @@
     noticeSection(doc);
     doc.footers();
     return doc.pages;
+  }
+  function zonesBest(doc) {
+    var d = doc.d, x = doc.x, y = doc.y, cells = d.single ? [['측정한 부위', d.best]] : [['가장 좋은 부위', d.best], ['관리가 필요한 부위', d.worst]];
+    doc.ensure(150); x = doc.x; y = doc.y;
+    x.fillStyle = CARD; rr(x, M, y, CW, 120, 16); x.fill(); x.strokeStyle = LINE; x.lineWidth = 1.5; x.stroke();
+    var cw = CW / (cells.length + 1);
+    cells.concat([['측정 부위', { name: d.count, score: null }]]).forEach(function (c, i) {
+      var X = M + i * cw + 32; if (i) { x.fillStyle = LINE; x.fillRect(M + i * cw, y + 22, 1.5, 76); }
+      font(x, 500, 18); x.fillStyle = MUTE; x.fillText(c[0], X, y + 44);
+      font(x, 600, 28); x.fillStyle = INK; x.fillText(c[1].name, X, y + 88);
+      if (c[1].score != null) { var nw = x.measureText(c[1].name).width; font(x, 400, 40, SERIF); x.fillText(String(c[1].score), X + nw + 16, y + 90); }
+    });
+    doc.y = y + 150;
+  }
+  function zonesMap(doc) {
+    var d = doc.d, x = doc.x, y = doc.y, mw = 470, mh = 529;
+    doc.ensure(mh + 30); x = doc.x; y = doc.y;
+    x.save(); rr(x, M, y, mw, mh, 14); x.clip(); x.drawImage(d.map, M, y, mw, mh); x.restore(); x.strokeStyle = LINE; x.lineWidth = 1.5; rr(x, M, y, mw, mh, 14); x.stroke();
+    var X = M + mw + 50, bw = CW - mw - 50, yy = y + 10;
+    d.rows.forEach(function (r) {
+      font(x, 600, 23); x.fillStyle = r.ok ? INK : MUTE; x.fillText(r.name, X, yy + 30);
+      x.textAlign = 'right';
+      if (r.ok) { font(x, 400, 36, SERIF); x.fillStyle = INK; x.fillText(String(r.overall), X + bw, yy + 34); var sw = x.measureText(String(r.overall)).width; font(x, 600, 18); x.fillStyle = r.color; x.fillText(r.label, X + bw - sw - 14, yy + 30); }
+      else { font(x, 400, 19); x.fillStyle = MUTE; x.fillText(r.missText, X + bw, yy + 30); }
+      x.textAlign = 'left';
+      if (r.ok) doc.bar(X, yy + 48, bw, r.overall / 100, r.color, 8);
+      yy += 80;
+    });
+    font(x, 400, 18); x.fillStyle = MUTE; wrap(x, '지도는 마주 본 얼굴 기준이에요 (내 왼쪽 볼은 그림의 오른쪽).', bw).forEach(function (ln, i) { x.fillText(ln, X, yy + 20 + i * 26); });
+    doc.y = y + Math.max(mh, yy - y + 60) + 30;
+  }
+  function zonesTable(doc) {
+    var d = doc.d, cols = [M, M + 200, M + 330, M + 470, M + 590, M + 720, M + 890];
+    function head() { var x = doc.x, y = doc.y; font(x, 600, 18); x.fillStyle = MUTE; ['부위', '종합', '매끄러움', '모공', '잔주름', '붉은기', '유분'].forEach(function (t, i) { x.fillText(t, cols[i], y + 24); }); x.fillStyle = INK; x.fillRect(M, y + 40, CW, 1.5); doc.y = y + 48; }
+    doc.ensure(130); head();
+    d.rows.forEach(function (r) {
+      if (doc.ensure(70)) head();
+      var x = doc.x, y = doc.y;
+      font(x, 600, 23); x.fillStyle = r.ok ? INK : MUTE; x.fillText(r.name, cols[0], y + 42);
+      if (!r.ok) { font(x, 400, 20); x.fillStyle = MUTE; x.fillText(r.missText, cols[1], y + 42); }
+      else {
+        font(x, 400, 34, SERIF); x.fillStyle = r.color; x.fillText(String(r.overall), cols[1], y + 44);
+        font(x, 400, 28, SERIF); x.fillStyle = INK; [r.smooth, r.pore, r.lines].forEach(function (v, i) { x.fillText(String(v), cols[2 + i], y + 43); });
+        font(x, 600, 21); x.fillStyle = INK; x.fillText(r.red, cols[5], y + 42); var rw = x.measureText(r.red).width; font(x, 400, 17); x.fillStyle = SUB; x.fillText(r.redRel, cols[5] + rw + 8, y + 42);
+        font(x, 600, 21); x.fillStyle = INK; x.fillText(r.shine, cols[6], y + 42); var sw = x.measureText(r.shine).width; font(x, 400, 17); x.fillStyle = SUB; x.fillText(r.shinePct, cols[6] + sw + 8, y + 42);
+      }
+      x.fillStyle = LINE; x.fillRect(M, y + 66, CW, 1); doc.y = y + 68;
+    });
+    doc.y += 14;
+  }
+  function zonesType(doc) {
+    var d = doc.d, x = doc.x, y; doc.ensure(300); x = doc.x; y = doc.y;
+    font(x, 600, 17); x.fillStyle = ACC; spaced(x, 'SKIN TYPE', M, y + 30, 4);
+    font(x, 600, 44); x.fillStyle = INK; x.fillText(d.type.name, M, y + 92);
+    font(x, 400, 21); x.fillStyle = SUB; var dl = wrap(x, (TYPE_DESC[d.type.key] || '') + ' ' + d.typeNote, CW / 2 - 20); dl.forEach(function (ln, i) { x.fillText(ln, M, y + 140 + i * 32); });
+    var X = M + CW / 2 + 30, bw = CW / 2 - 30;
+    d.tu.forEach(function (r, i) {
+      var yy = y + 60 + i * 110;
+      font(x, 600, 24); x.fillStyle = INK; x.fillText(r.label, X, yy);
+      x.textAlign = 'right'; x.fillText(r.level, X + bw, yy); font(x, 400, 20); x.fillStyle = SUB; x.fillText('광택 ' + r.v + '%', X + bw - x.measureText(r.level).width - 70, yy); x.textAlign = 'left';
+      doc.bar(X, yy + 22, bw, r.v / 10, r.color, 10);
+    });
+    doc.y = Math.max(y + 300, y + 150 + dl.length * 32 + 20);
   }
   function metrics(doc) {
     doc.d.metrics.forEach(function (m) {
