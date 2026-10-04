@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.5.0';
+  const APP_VERSION = '1.6.0';
   const BUILD_DATE = '2026-10-04';
   window.APP_VERSION = APP_VERSION;
   (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
@@ -29,7 +29,7 @@
     if (id === 'intro') wipeSession();
     document.querySelectorAll('.screen').forEach((s) => { const on = s.id === 'screen-' + id; s.classList.toggle('active', on); s.setAttribute('aria-hidden', on ? 'false' : 'true'); });
     window.scrollTo(0, 0);
-    try { armIdle(); updateDock(); if (id === 'analyzing') armWatchdog(); } catch (e) {} // 초기화 전 호출 무시
+    try { armIdle(); updateDock(); if (id === 'analyzing') armWatchdog(); if (id === 'intro') applyIntroMode(); if (id !== 'staff' && id !== 'staff-pin') staffUnlocked = false; if (id !== 'report') restorePrint(); } catch (e) {} // 초기화 전 호출 무시
     const h = document.querySelector('#screen-' + id + ' h1, #screen-' + id + ' h2, #screen-' + id + ' .topbar span');
     if (h && id !== 'intro' && h.offsetParent) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) {} }
   }
@@ -176,6 +176,7 @@
     clearInterval(meterTimer);
     if (stream) stream.getTracks().forEach((t) => t.stop());
     stream = null; torchOn = false;
+    try { resetLight(); } catch (e) {}
     const v = document.querySelector('#video'); if (v) v.srcObject = null;
   }
   function layoutGuide() {
@@ -206,8 +207,17 @@
     for (let i = 0; i < d.length; i += 4) { const y = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]; s += y; if (y > 248) clip++; }
     const m = s / (d.length / 4), el = $('#light-meter');
     let txt = '밝기 좋음', ok = true;
-    if (m < 70) { txt = '조금 더 밝은 곳으로'; ok = false; }
-    else if (m > 215 || clip > 120) { txt = '빛이 너무 강해요'; ok = false; }
+    // 화면 전체 밝기 (역광 판단: 주변은 밝은데 가운데가 어두움)
+    x.drawImage(v, 0, 0, v.videoWidth, v.videoHeight, 0, 0, 48, 48);
+    const fd = x.getImageData(0, 0, 48, 48).data; let fs = 0;
+    for (let i = 0; i < fd.length; i += 4) fs += 0.299 * fd[i] + 0.587 * fd[i + 1] + 0.114 * fd[i + 2];
+    const fm = fs / (fd.length / 4);
+    let st = 'ok';
+    if (m < 70) { txt = '조금 더 밝은 곳으로'; ok = false; st = 'dark'; }
+    else if (m > 215 || clip > 120) { txt = '빛이 너무 강해요'; ok = false; st = 'bright'; }
+    else if (fm > 150 && m < fm * 0.62) { txt = '역광이에요'; ok = false; st = 'backlit'; }
+    if (lightOverride) { st = lightOverride; ok = st === 'ok'; txt = ok ? '밝기 좋음' : LIGHT_MSG[st][0]; }
+    lightVerdict(st);
     el.classList.toggle('good', ok); el.classList.toggle('bad', !ok);
     $('#light-text').textContent = txt;
     $('#cam-guide').classList.toggle('ok', ok);
@@ -215,6 +225,8 @@
   let busy = false;
   function captureFromVideo() {
     if (busy || activeId() !== 'camera') return;
+    if (lightState !== 'ok' && !shootConfirmed && stream) return askShootConfirm(); // 어두움/역광: 확인 후 촬영
+    shootConfirmed = false;
     if (faceMode) return captureFace();
     if (zonesMode) return captureZone();
     const v = $('#video'); if (!v.videoWidth) return toast('카메라가 준비 중이에요');
@@ -1025,7 +1037,6 @@
     renderRecs();
   }
   $('#btn-zones-mode').onclick = openZonesIntro;
-  $('#btn-mode-quick').onclick = () => { const g = $('#btn-start'); try { g.focus(); } catch (e) {} };
   $('#zi-eye').onchange = renderZonesIntroSteps; $('#zi-face').onchange = renderZonesIntroSteps;
   $('#btn-zi-home').onclick = () => show('intro');
   $('#btn-zones-start').onclick = startZones;
@@ -1042,6 +1053,7 @@
   // ---------- 전체 결과 리포트 (report.js는 필요할 때만 불러옴) ----------
   const APP_URL = 'https://handj1998-del.github.io/skin-tester/';
   function resetReport() {
+    try { restorePrint(); } catch (e) {}
     if (reportPages) reportPages.forEach(freeCanvas);
     reportName = ''; reportPages = null; reportTimer && clearTimeout(reportTimer);
     const inp = $('#rep-name'); if (inp) inp.value = '';
@@ -1059,7 +1071,7 @@
       mode: isFace ? 'face' : current.mode === 'zones' ? 'zones' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO,
       title: isFace ? '얼굴 피부 분석 리포트' : current.mode === 'zones' ? '부위별 종합 리포트' : '피부결 분석 리포트',
       care: current.care, makeup: current.makeup, tone: current.tone, season: S, estSeason: REC.SEASONS[current.tone.season], seasonChosen: getSeasonChoice() !== 'auto',
-      skinRGB: current.skinRGB.map((v) => Math.round(v)),
+      skinRGB: current.skinRGB.map((v) => Math.round(v)), store: staff.store || '',
     };
     if (current.mode === 'zones') {
       const Z = current.zones;
@@ -1155,7 +1167,7 @@
   });
 
   // ---------- 이벤트 ----------
-  $('#btn-start').onclick = () => { exitFaceMode(); startCamera(); };
+  $('#btn-start').onclick = () => { if (introMode === 'zones') return openZonesIntro(); if (introMode === 'face' && faceSupported()) return openFaceIntro(); exitFaceMode(); startCamera(); };
   $('#btn-shutter').onclick = captureFromVideo;
   $('#btn-flip').onclick = () => { facing = facing === 'environment' ? 'user' : 'environment'; startCamera(); };
   $('#btn-torch').onclick = async () => {
@@ -1214,11 +1226,11 @@
   let WATCH_MS = 60000;
   // 사용하지 않으면 자동으로 처음으로 (공용 기기 개인정보 보호)
   const IDLE = { ms: 90000, sec: 15 };
-  const IDLE_SCREENS = ['result', 'invalid', 'face', 'zones', 'report', 'zone-step', 'zones-intro', 'face-intro', 'camera'];
+  const IDLE_SCREENS = ['result', 'invalid', 'face', 'zones', 'report', 'zone-step', 'zones-intro', 'face-intro', 'camera', 'staff', 'staff-pin'];
   let idleT = 0, cdT = 0, cdLeft = 0;
   function armIdle() {
     clearTimeout(idleT);
-    if (!$('#idle').hidden || IDLE_SCREENS.indexOf(activeId()) < 0) return;
+    if (!IDLE.ms || !$('#idle').hidden || IDLE_SCREENS.indexOf(activeId()) < 0) return; // 직원 설정에서 '끔'
     idleT = setTimeout(startCountdown, IDLE.ms);
   }
   function startCountdown() {
@@ -1262,6 +1274,213 @@
   };
   // 첫 화면 이후 리포트 모듈 미리 불러오기 (배포 중간 버전 섞임 방지)
   window.addEventListener('load', () => setTimeout(() => { loadReportLib().catch(() => {}); }, 2500));
+
+  // ---------- v1.6.0 인쇄 (리포트 A4 페이지만) ----------
+  let printMoved = false;
+  document.body.appendChild($('#print-root')); // body 바로 아래로 (인쇄 시 나머지는 모두 숨김)
+  function preparePrint() {
+    if (printMoved || !reportPages || activeId() !== 'report') return false;
+    const root = $('#print-root'); reportPages.forEach((c) => root.appendChild(c)); // 캔버스를 그대로 옮김 (이미지 로딩 없이 즉시)
+    document.documentElement.classList.add('printing'); printMoved = true; return true;
+  }
+  function restorePrint() {
+    if (!printMoved) return; printMoved = false;
+    document.documentElement.classList.remove('printing');
+    const pv = $('#rep-preview'), root = $('#print-root');
+    if (reportPages) reportPages.forEach((c) => pv.appendChild(c));
+    root.innerHTML = '';
+  }
+  window.addEventListener('beforeprint', preparePrint); // 브라우저 메뉴로 인쇄해도 리포트만
+  window.addEventListener('afterprint', restorePrint);
+  $('#btn-rep-print').onclick = () => reportAction('#btn-rep-print', '인쇄 준비 중…', async () => {
+    preparePrint();
+    try { window.print(); } catch (e) { restorePrint(); throw e; }
+    if (!('onafterprint' in window)) setTimeout(restorePrint, 1500);
+  });
+
+  // ---------- v1.6.0 촬영 전 조명 경고 ----------
+  let lightState = 'ok', lightBad = 0, lightGood = 0, lightOverride = null, shootConfirmed = false;
+  const LIGHT_MSG = {
+    dark: ['조명이 어두워요', '밝은 곳으로 이동해 주세요', '어두운 채로 촬영할까요?', '조명이 어두우면 결과가 부정확하거나 측정할 수 없는 사진이 될 수 있어요.'],
+    bright: ['빛이 너무 강해요', '직사광선을 피해 고르게 밝은 곳에서 찍어 주세요', '빛이 강한 채로 촬영할까요?', '빛 반사가 심하면 피부결과 유분이 정확하게 측정되지 않을 수 있어요.'],
+    backlit: ['역광이에요', '창문·조명을 등지지 말고 빛을 마주 보고 찍어 주세요', '역광인 채로 촬영할까요?', '얼굴이 어둡게 찍혀 결과가 부정확할 수 있어요.'],
+  };
+  function setLight(st) {
+    lightState = st; const w = $('#light-warn'), on = st !== 'ok';
+    w.hidden = !on; w.dataset.state = st;
+    if (on) { $('#light-warn-title').textContent = LIGHT_MSG[st][0]; $('#light-warn-text').textContent = LIGHT_MSG[st][1]; }
+    $('#btn-lw-torch').hidden = !(st === 'dark' && !$('#btn-torch').hidden && !torchOn);
+    $('#btn-shutter').classList.toggle('dim', on);
+    $('#btn-shutter').setAttribute('aria-label', on ? '촬영 (' + LIGHT_MSG[st][0] + ')' : '촬영');
+  }
+  function resetLight() { lightBad = lightGood = 0; shootConfirmed = false; setLight('ok'); $('#shoot-confirm').hidden = true; }
+  function lightVerdict(st) { // 깜빡임 방지: 2회 연속일 때만 바꿈
+    if (lightOverride) st = lightOverride;
+    if (st === 'ok') { lightGood++; lightBad = 0; if (lightGood >= 2 && lightState !== 'ok') setLight('ok'); }
+    else { lightBad++; lightGood = 0; if ((lightBad >= 2 || lightOverride) && lightState !== st) setLight(st); }
+  }
+  function askShootConfirm() {
+    const m = LIGHT_MSG[lightState] || LIGHT_MSG.dark;
+    $('#sc-title').textContent = m[2]; $('#sc-desc').textContent = m[3];
+    $('#shoot-confirm').hidden = false; try { $('#btn-sc-cancel').focus(); } catch (e) {}
+  }
+  $('#btn-sc-cancel').onclick = () => { $('#shoot-confirm').hidden = true; };
+  $('#btn-sc-ok').onclick = () => { $('#shoot-confirm').hidden = true; shootConfirmed = true; captureFromVideo(); };
+  $('#btn-lw-torch').onclick = () => { $('#btn-torch').click(); setTimeout(() => setLight(lightState), 300); };
+
+  // ---------- v1.6.0 직원 설정 (PIN 잠금 · 기기 설정) ----------
+  // 매장 기기 설정만 저장 (고객 정보 아님). 고객 세션 초기화로 지워지지 않음.
+  const STAFF_KEY = 'howStaff.v1', LOCK_KEY = 'howStaff.lock';
+  const STAFF_DEF = { idle: 90, cd: 15, mode: 'quick', store: '', storeIntro: false, pin: null }; // pin null = 기본 0000
+  function loadStaff() { try { return Object.assign({}, STAFF_DEF, JSON.parse(localStorage.getItem(STAFF_KEY) || 'null') || {}); } catch (e) { return Object.assign({}, STAFF_DEF); } }
+  let staff = loadStaff(), staffUnlocked = false, introMode = 'quick';
+  function saveStaff() { try { localStorage.setItem(STAFF_KEY, JSON.stringify(staff)); } catch (e) { toast('설정을 저장하지 못했어요'); } applyStaff(); }
+  function applyStaff() {
+    IDLE.ms = staff.idle * 1000; IDLE.sec = staff.cd; armIdle();
+    const s = $('#intro-store'); s.textContent = staff.store; s.hidden = !(staff.storeIntro && staff.store);
+    if (activeId() === 'intro') applyIntroMode();
+  }
+  function applyIntroMode() {
+    introMode = staff.mode === 'face' && !faceSupported() ? 'quick' : staff.mode;
+    markIntroMode();
+  }
+  function markIntroMode() {
+    [['quick', '#btn-mode-quick'], ['zones', '#btn-zones-mode'], ['face', '#btn-face-mode']].forEach((q) => { const b = $(q[1]), on = q[0] === introMode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+    $('#btn-start').textContent = introMode === 'zones' ? '부위별 종합 시작하기' : introMode === 'face' ? '얼굴 전체 분석 시작하기' : '측정 시작하기';
+  }
+  // SHA-256 (SubtleCrypto, 없으면 JS 구현)
+  function sha256js(str) {
+    const b = unescape(encodeURIComponent(str)), K = [], H = [1779033703, -1150833019, 1013904242, -1521486534, 1359893119, -1694144372, 528734635, 1541459225];
+    let n = 2, c = 0; while (c < 64) { let p = true; for (let i = 2; i * i <= n; i++) if (n % i === 0) { p = false; break; } if (p) K[c++] = (Math.pow(n, 1 / 3) % 1) * 4294967296 | 0; n++; }
+    const w = [], l = b.length * 8, words = [];
+    for (let i = 0; i < b.length; i++) words[i >> 2] |= b.charCodeAt(i) << (24 - (i % 4) * 8);
+    words[b.length >> 2] |= 0x80 << (24 - (b.length % 4) * 8);
+    words[(((b.length + 8) >> 6) << 4) + 15] = l;
+    for (let j = 0; j < words.length; j += 16) {
+      let [a, bb, cc, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) {
+        if (i < 16) w[i] = words[j + i] | 0;
+        else { const x = w[i - 15], y = w[i - 2]; w[i] = (((x >>> 7) | (x << 25)) ^ ((x >>> 18) | (x << 14)) ^ (x >>> 3)) + w[i - 16] + (((y >>> 17) | (y << 15)) ^ ((y >>> 19) | (y << 13)) ^ (y >>> 10)) + w[i - 7] | 0; }
+        const t1 = h + (((e >>> 6) | (e << 26)) ^ ((e >>> 11) | (e << 21)) ^ ((e >>> 25) | (e << 7))) + ((e & f) ^ (~e & g)) + K[i] + w[i] | 0;
+        const t2 = (((a >>> 2) | (a << 30)) ^ ((a >>> 13) | (a << 19)) ^ ((a >>> 22) | (a << 10))) + ((a & bb) ^ (a & cc) ^ (bb & cc)) | 0;
+        h = g; g = f; f = e; e = d + t1 | 0; d = cc; cc = bb; bb = a; a = t1 + t2 | 0;
+      }
+      H[0] = H[0] + a | 0; H[1] = H[1] + bb | 0; H[2] = H[2] + cc | 0; H[3] = H[3] + d | 0; H[4] = H[4] + e | 0; H[5] = H[5] + f | 0; H[6] = H[6] + g | 0; H[7] = H[7] + h | 0;
+    }
+    return H.map((v) => ('00000000' + (v >>> 0).toString(16)).slice(-8)).join('');
+  }
+  async function sha256(str) {
+    try {
+      if (window.crypto && crypto.subtle && window.TextEncoder) {
+        const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+        return Array.prototype.map.call(new Uint8Array(buf), (x) => ('0' + x.toString(16)).slice(-2)).join('');
+      }
+    } catch (e) {}
+    return sha256js(str);
+  }
+  const pinHash = (pin) => sha256('how-staff-pin:' + pin);
+  async function pinOk(pin) { return staff.pin ? (await pinHash(pin)) === staff.pin : pin === '0000'; }
+  function getLock() { try { return JSON.parse(localStorage.getItem(LOCK_KEY) || 'null') || { n: 0, until: 0 }; } catch (e) { return { n: 0, until: 0 }; } }
+  function setLock(l) { try { if (!l.n && !l.until) localStorage.removeItem(LOCK_KEY); else localStorage.setItem(LOCK_KEY, JSON.stringify(l)); } catch (e) {} }
+  let pinMode = 'enter', pinBuf = '', pinNew = '', pinLockT = 0, pinChecking = false;
+  const PIN_TITLE = { enter: 'PIN 4자리를 입력해 주세요', new1: '새 PIN 4자리를 입력해 주세요', new2: '새 PIN을 한 번 더 입력해 주세요' };
+  function openStaffPin(mode) {
+    stopIdle(); staffUnlocked = mode === 'new1' && staffUnlocked;
+    pinMode = mode || 'enter'; pinBuf = ''; pinNew = '';
+    show('staff-pin'); renderPin(''); $('#btn-pin-later').hidden = true;
+    lockTick();
+  }
+  function renderPin(msg, bad) {
+    $('#pin-title').textContent = PIN_TITLE[pinMode]; $('#pin-kicker').textContent = pinMode === 'enter' ? 'Staff only' : 'Change PIN';
+    if (msg != null) { $('#pin-msg').textContent = msg; $('#pin-msg').classList.toggle('bad', !!bad); }
+    document.querySelectorAll('#pin-dots i').forEach((d, i) => d.classList.toggle('on', i < pinBuf.length));
+    if (bad) { const dots = $('#pin-dots'); dots.classList.remove('shake'); void dots.offsetWidth; dots.classList.add('shake'); }
+  }
+  function lockTick() {
+    clearInterval(pinLockT);
+    const upd = () => {
+      const l = getLock(), left = Math.ceil((l.until - Date.now()) / 1000), locked = pinMode === 'enter' && left > 0;
+      document.querySelectorAll('#pin-pad button').forEach((b) => { if (b.dataset.k !== 'cancel') b.disabled = locked; });
+      if (locked) $('#pin-msg').textContent = `잠시 후 다시 시도해 주세요 (${left}초)`;
+      else { if (l.until) { setLock({ n: 0, until: 0 }); renderPin(''); } clearInterval(pinLockT); }
+      return locked;
+    };
+    if (upd()) pinLockT = setInterval(upd, 500);
+  }
+  async function pinComplete() {
+    const pin = pinBuf; pinBuf = '';
+    if (pinMode === 'enter') {
+      pinChecking = true; const good = await pinOk(pin); pinChecking = false;
+      if (!good) {
+        const l = getLock(); l.n++;
+        if (l.n >= 5) { setLock({ n: 0, until: Date.now() + 30000 }); renderPin('', true); return lockTick(); }
+        setLock(l); return renderPin(`PIN이 맞지 않아요 (${l.n}/5)`, true);
+      }
+      setLock({ n: 0, until: 0 }); staffUnlocked = true;
+      if (!staff.pin) { pinMode = 'new1'; renderPin('기본 PIN(0000)을 사용 중이에요. 고객이 설정을 바꾸지 않도록 새 PIN으로 바꿔 주세요.'); $('#btn-pin-later').hidden = false; return; }
+      return openStaff();
+    }
+    if (pinMode === 'new1') {
+      if (pin === '0000') return renderPin('0000은 기본 PIN이라 쓸 수 없어요. 다른 숫자를 입력해 주세요.', true);
+      pinNew = pin; pinMode = 'new2'; return renderPin('');
+    }
+    if (pinMode === 'new2') {
+      if (pin !== pinNew) { pinMode = 'new1'; pinNew = ''; return renderPin('두 번 입력한 PIN이 달라요. 처음부터 다시 입력해 주세요.', true); }
+      staff.pin = await pinHash(pin); saveStaff(); toast('PIN을 바꿨어요'); return openStaff();
+    }
+  }
+  function pinKey(k) {
+    if (activeId() !== 'staff-pin' || pinChecking) return;
+    if (k === 'cancel') { if (pinMode !== 'enter' && staffUnlocked) return openStaff(); return show('intro'); }
+    if (pinMode === 'enter' && getLock().until > Date.now()) return;
+    if (k === 'del') { pinBuf = pinBuf.slice(0, -1); return renderPin(null); }
+    if (!/^\d$/.test(k) || pinBuf.length >= 4) return;
+    pinBuf += k; renderPin(pinBuf.length === 1 ? '' : null);
+    if (pinBuf.length === 4) setTimeout(pinComplete, 120);
+  }
+  $('#pin-pad').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) pinKey(b.dataset.k); });
+  document.addEventListener('keydown', (e) => { if (activeId() !== 'staff-pin') return; if (/^\d$/.test(e.key)) pinKey(e.key); else if (e.key === 'Backspace') pinKey('del'); else if (e.key === 'Escape') pinKey('cancel'); });
+  $('#btn-pin-later').onclick = () => openStaff();
+  $('#btn-pin-home').onclick = () => { staffUnlocked = false; show('intro'); };
+  function segSet(id, v) { document.querySelectorAll(id + ' button').forEach((b) => { const on = b.dataset.v === String(v); b.classList.toggle('on', on); b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', on ? 'true' : 'false'); }); }
+  function openStaff() {
+    if (!staffUnlocked) return openStaffPin();
+    show('staff');
+    segSet('#st-idle', staff.idle); segSet('#st-cd', staff.cd); segSet('#st-mode', staff.mode);
+    $('#st-store').value = staff.store; $('#st-store-intro').checked = !!staff.storeIntro;
+    $('#staff-defpin').hidden = !!staff.pin;
+    const fb = document.querySelector('#st-mode [data-v="face"]'); fb.disabled = !faceSupported();
+    disarmReset();
+  }
+  [['#st-idle', 'idle', Number], ['#st-cd', 'cd', Number], ['#st-mode', 'mode', String]].forEach((q) => {
+    $(q[0]).addEventListener('click', (e) => { const b = e.target.closest('button'); if (!b || b.disabled || !staffUnlocked) return; staff[q[1]] = q[2](b.dataset.v); segSet(q[0], staff[q[1]]); saveStaff(); });
+  });
+  $('#st-store').addEventListener('input', () => { if (!staffUnlocked) return; staff.store = $('#st-store').value.trim().slice(0, 24); saveStaff(); });
+  $('#st-store-intro').onchange = () => { if (!staffUnlocked) return; staff.storeIntro = $('#st-store-intro').checked; saveStaff(); };
+  $('#btn-staff-pin').onclick = $('#btn-staff-pin2').onclick = () => openStaffPin('new1');
+  let resetArmed = 0;
+  function disarmReset() { clearTimeout(resetArmed); resetArmed = 0; $('#btn-staff-reset').textContent = '설정을 기본값으로 되돌리기 (PIN 유지)'; }
+  $('#btn-staff-reset').onclick = () => {
+    if (!resetArmed) { resetArmed = setTimeout(disarmReset, 3000); $('#btn-staff-reset').textContent = '한 번 더 누르면 기본값으로 되돌려요'; return; }
+    const pin = staff.pin; staff = Object.assign({}, STAFF_DEF, { pin }); saveStaff(); toast('설정을 기본값으로 되돌렸어요'); openStaff();
+  };
+  $('#btn-staff-done').onclick = $('#btn-staff-home').onclick = () => { staffUnlocked = false; show('intro'); toast('설정을 저장하고 잠갔어요'); };
+  // 숨은 진입: 첫 화면 로고 2초 길게 누르기 · 버전 표시 5번 탭
+  (function hiddenEntry() {
+    const seal = document.querySelector('.hero-seal'); let t = 0;
+    const clear = () => { clearTimeout(t); t = 0; };
+    seal.addEventListener('pointerdown', () => { clear(); t = setTimeout(() => { t = 0; if (activeId() === 'intro') openStaffPin(); }, 2000); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => seal.addEventListener(ev, clear));
+    seal.addEventListener('contextmenu', (e) => e.preventDefault());
+    let taps = 0, tapT = 0;
+    document.querySelectorAll('.js-ver').forEach((b) => (b.onclick = () => {
+      taps++; clearTimeout(tapT);
+      if (taps >= 5) { taps = 0; return openStaffPin(); }
+      tapT = setTimeout(() => { if (taps === 1) checkForUpdate(true); taps = 0; }, 700);
+    }));
+  })();
+  $('#btn-mode-quick').onclick = () => { introMode = 'quick'; markIntroMode(); };
+  applyStaff(); applyIntroMode();
 
   window.addEventListener('popstate', () => {
     const onIntro = $('#screen-intro').classList.contains('active');
@@ -1316,7 +1535,6 @@
   $('#btn-refresh').onclick = hardRefresh;
   $('#btn-update').onclick = hardRefresh;
   $('#btn-update-close').onclick = () => ($('#update-banner').hidden = true);
-  document.querySelectorAll('.js-ver').forEach((b) => (b.onclick = () => checkForUpdate(true)));
   // 정리: 새로고침용 쿼리(r)는 주소창에서 제거
   try { const u = new URL(location.href); if (u.searchParams.has('r')) { u.searchParams.delete('r'); history.replaceState(history.state, '', u.toString()); } } catch (e) {}
   window.addEventListener('load', () => setTimeout(() => checkForUpdate(false), 800));
@@ -1361,6 +1579,12 @@
     fatal: (m) => { setTimeout(() => { throw new Error(m || 'test fatal'); }, 0); },
     camLive: () => !!stream,
     showScreen: (id) => show(id),
+    light: (st) => { lightOverride = st; },
+    idle: () => ({ ms: IDLE.ms, sec: IDLE.sec }),
+    lightState: () => lightState,
+    preparePrint: () => preparePrint(), restorePrint: () => restorePrint(),
+    staff: () => JSON.parse(JSON.stringify(staff)),
+    sha: async (t) => ({ js: sha256js(t), native: await sha256(t) }),
     pendingUpdate: (v) => { pendingUpdate = v; },
     zoneStepOnly: async (url, i) => { if (!zoneSession) { openZonesIntro(); zoneSession = { steps: ZONE_DEF.slice(0, 5), idx: 0, res: {}, face: null, withFace: false, faceStep: false }; zonesMode = true; } zoneSession.idx = i || 0; const im = await loadImage(url); await runZone(await fromImage(im)); return zoneSession.res[zoneSession.steps[zoneSession.idx].key].status; },
     async faceUrl(url) { const im = await loadImage(url); await runFace(fromFaceImage(im), true); const f = current.face; return f.invalid ? { invalid: true, blockers: f.blockers } : { type: f.type, summary: f.summary, t: f.tShine, u: f.uShine, compact: window.HowFaceAnalyze.compact(f), care: current.care.priorityName, finish: current.makeup.finish, season: current.tone.season }; },

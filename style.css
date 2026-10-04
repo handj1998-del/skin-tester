@@ -625,3 +625,59 @@ body.has-dock .screen.active{padding-bottom:calc(96px + var(--safe-b))}
 .refresh-btn{min-height:44px}
 .mode-switch button{min-height:44px}
 @media (max-height:600px){.mode-switch button{min-height:44px;padding:4px 3px}}
+
+/* ===== v1.6.0 인쇄 · 직원 설정 · 조명 경고 ===== */
+.print-root{display:none}
+@media print{
+  @page{size:A4;margin:0}
+  html.printing,html.printing body{background:#fff !important;margin:0 !important;padding:0 !important;min-height:0 !important}
+  html.printing body>*:not(.print-root){display:none !important}
+  html.printing .print-root{display:block !important}
+  html.printing .print-root canvas{display:block;width:210mm !important;height:297mm !important;max-width:none !important;margin:0 !important;box-shadow:none !important;border:0 !important;border-radius:0 !important;page-break-after:always;break-after:page}
+  html.printing .print-root canvas:last-child{page-break-after:auto;break-after:auto}
+}
+.rep-actions .row .btn{padding-left:6px;padding-right:6px;font-size:14px;letter-spacing:0}
+/* 첫 화면 매장 이름 */
+.intro-store{margin:8px 0 0;font-size:12px;letter-spacing:.18em;color:var(--accent)}
+.hero-seal{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.hero-seal img{-webkit-user-drag:none;pointer-events:none}
+/* PIN */
+.pin-card{text-align:center;padding:26px 20px 18px}
+.pin-card h2{font-size:18px;margin:0 0 8px}
+.pin-msg{min-height:40px;margin:0 0 6px;font-size:13px;line-height:1.5;color:var(--sub)}
+.pin-msg.bad{color:var(--accent)}
+.pin-dots{display:flex;justify-content:center;gap:16px;margin:4px 0 22px}
+.pin-dots i{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--ink);transition:background .15s}
+.pin-dots i.on{background:var(--ink)}
+.pin-dots.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:300px;margin:0 auto 10px}
+.pin-pad button{min-height:60px;border:1px solid var(--line);background:var(--card);font:inherit;font-family:var(--serif);font-size:28px;color:var(--ink);cursor:pointer}
+.pin-pad button:active{background:#f1ebe6}
+.pin-pad button.pk-sub{font-family:inherit;font-size:14px;color:var(--sub)}
+.pin-pad button:disabled{opacity:.35}
+.staff-note{font-size:12px;line-height:1.6;color:var(--sub);margin:14px 0 0}
+.no-flexgap .pin-dots>*+*{margin-left:16px}
+/* 직원 설정 */
+.staff-card h4{font-size:13px;font-weight:600;margin:16px 0 8px}
+.staff-desc{font-size:13px;color:var(--sub);line-height:1.6;margin:-6px 0 12px}
+.seg{display:flex;border:1px solid var(--line)}
+.seg button{flex:1 1 0;min-width:0;min-height:44px;border:0;border-left:1px solid var(--line);background:none;font:inherit;font-size:13px;color:var(--sub);cursor:pointer;padding:6px 2px}
+.seg button:first-child{border-left:0}
+.seg button.on{background:var(--ink);color:#fbf7f3}
+.seg button:disabled{opacity:.35}
+.st-input{width:100%;box-sizing:border-box;min-height:46px;border:1px solid var(--line);background:#fff;padding:10px 12px;font:inherit;font-size:15px;color:var(--ink);border-radius:0;margin-bottom:6px}
+.staff-card .btn+.btn{margin-top:6px}
+.staff-warn{border-left:2px solid var(--accent)}
+.staff-warn b{display:block;font-size:15px;margin-bottom:4px}
+.staff-warn p{font-size:13px;color:var(--sub);margin:0 0 12px}
+/* 조명 경고 */
+.light-warn{position:absolute;left:16px;right:16px;top:calc(66px + var(--safe-t));z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;padding:12px 14px;background:rgba(43,30,26,.88);border-left:3px solid #e2a26f;color:#fbf3ec}
+.light-warn[hidden]{display:none}
+.light-warn b{font-size:15px;font-weight:600;letter-spacing:.02em}
+.light-warn span{font-size:13px;color:rgba(251,243,236,.85);flex:1 1 100%}
+.light-warn .lw-torch{margin-left:auto;min-height:40px;border:1px solid rgba(251,243,236,.6);background:none;color:#fbf3ec;font:inherit;font-size:13px;padding:6px 12px;cursor:pointer}
+.light-warn .lw-torch[hidden]{display:none}
+#screen-camera.zone-mode .light-warn{top:calc(124px + var(--safe-t))}
+.shutter.dim{opacity:.45}
+.no-flexgap .light-warn>*+*{margin-left:10px}

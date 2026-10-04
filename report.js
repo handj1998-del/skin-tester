@@ -65,7 +65,7 @@
       var x = c.getContext('2d');
       x.fillStyle = LINE; x.fillRect(M, H - 78, CW, 1.5);
       font(x, 400, 18); x.fillStyle = MUTE; x.textAlign = 'left';
-      x.fillText('H.O.W 피부결 테스터 · v' + d.version + ' · 참고용 결과이며 의학적 진단이 아니에요', M, H - 46);
+      x.fillText('H.O.W 피부결 테스터' + (d.store ? ' · ' + d.store : '') + ' · v' + d.version + ' · 참고용 결과이며 의학적 진단이 아니에요', M, H - 46);
       x.textAlign = 'right'; font(x, 500, 20, SERIF); x.fillText((i + 1) + ' / ' + n, W - M, H - 46); x.textAlign = 'left';
     });
   };
@@ -203,7 +203,9 @@
     else { font(x, 600, 64); x.fillStyle = INK; x.textAlign = 'center'; x.fillText('H.O.W', W / 2, y + 60); x.textAlign = 'left'; y += 70; }
     font(x, 600, 17); x.fillStyle = ACC; x.textAlign = 'center'; spaced(x, d.mode === 'face' ? 'FACE SKIN REPORT' : d.mode === 'zones' ? 'ZONE SKIN REPORT' : 'SKIN TEXTURE REPORT', W / 2, y + 62, 6, 'center');
     font(x, 600, 46); x.fillStyle = INK; x.fillText(d.title, W / 2, y + 128);
-    x.fillStyle = ACC; x.fillRect(W / 2 - 24, y + 156, 48, 2); x.textAlign = 'left';
+    x.fillStyle = ACC; x.fillRect(W / 2 - 24, y + 156, 48, 2);
+    if (d.store) { font(x, 500, 22); x.fillStyle = SUB; spaced(x, d.store, W / 2, y + 200, 2, 'center'); }
+    x.textAlign = 'left';
     // 메타 정보
     var metas = [['이름', d.name || '—'], ['측정 일시', fmtFull(d.ts)], ['측정 방식', d.mode === 'face' ? '얼굴 전체 분석 (Beta)' : d.mode === 'zones' ? '부위별 종합 측정' : '가까이 촬영 · 피부결']];
     var my = 410, mw = CW / metas.length;

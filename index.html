@@ -25,17 +25,17 @@
 <link rel="canonical" href="https://handj1998-del.github.io/skin-tester/">
 <link rel="preload" href="fonts/cg300.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.5.0">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=1.6.0">
 <meta name="apple-mobile-web-app-title" content="피부결테스터">
 <meta name="application-name" content="피부결테스터">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="icon" type="image/svg+xml" href="icons/favicon.svg?v=1.5.0">
-<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1.5.0">
+<link rel="icon" type="image/svg+xml" href="icons/favicon.svg?v=1.6.0">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1.6.0">
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"></noscript>
-<link rel="stylesheet" href="style.css?v=1.5.0">
+<link rel="stylesheet" href="style.css?v=1.6.0">
 </head>
 <body>
 <div id="app">
@@ -51,10 +51,11 @@
           <circle cx="150" cy="150" r="128" fill="none" stroke="#2b2523" stroke-opacity=".08" stroke-width="1" stroke-dasharray="1 5"/>
           <path d="M150 4 A146 146 0 0 1 253.2 46.8" fill="none" stroke="#a9796d" stroke-width="1.6" stroke-linecap="round"/>
         </svg>
-          <img src="logo.svg?v=1.5.0" alt="H.O.W" class="hero-logo" width="200" height="51">
+          <img src="logo.svg?v=1.6.0" alt="H.O.W" class="hero-logo" width="200" height="51">
         </div>
         <h1>피부결 테스터</h1>
         <p class="sub">폰 카메라로 매끄러움 · 모공 · 잔주름을 분석해요</p>
+        <p class="intro-store" id="intro-store" hidden></p>
       </div>
       <div class="actions intro-actions">
         <div class="mode-switch" role="group" aria-label="측정 방식">
@@ -123,6 +124,7 @@
       </div>
       <div class="zone-bar" id="zone-bar" aria-live="polite"><div class="zone-ill" id="zone-ill" aria-hidden="true"></div><div class="zone-prog"><b id="zone-step">1 / 5</b><span id="zone-name">이마</span><div class="zone-dots" id="zone-dots" aria-hidden="true"></div></div></div>
       <button class="btn text light zone-skip" id="btn-zone-skip" type="button">이 부위 건너뛰기</button>
+      <div class="light-warn" id="light-warn" role="alert" hidden><b id="light-warn-title">조명이 어두워요</b><span id="light-warn-text">밝은 곳으로 이동해 주세요</span><button type="button" class="lw-torch" id="btn-lw-torch" hidden>조명 켜기</button></div>
       <p class="cam-hint" id="cam-hint">약 10cm 거리에서 초점이 맞으면 촬영하세요</p>
       <div class="cam-tips" id="cam-tips" aria-hidden="true"><span>밝고 고른 빛</span><span>플래시 끄기</span><span>약 10cm</span><span>맨얼굴</span></div>
       <div class="cam-error" id="cam-error" hidden>
@@ -149,7 +151,7 @@
 
   <!-- 4. 결과 -->
   <section id="screen-result" class="screen">
-    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.5.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>분석 결과</em></span><span class="date" id="res-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-res-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>분석 결과</em></span><span class="date" id="res-date"></span></header>
     <div class="card score-card needs-valid">
       <div class="ring" id="ring" role="img" aria-label="피부결 점수"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="ring-bar"/></svg>
         <div class="ring-text"><b id="res-overall">0</b><small>피부결 점수</small></div></div>
@@ -202,7 +204,7 @@
 
   <!-- 6. 얼굴 전체 분석 안내 -->
   <section id="screen-face-intro" class="screen" aria-label="얼굴 전체 분석">
-    <header class="topbar"><button class="icon-btn plain" id="btn-fi-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.5.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 전체 분석</em></span><span class="date">Beta</span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-fi-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 전체 분석</em></span><span class="date">Beta</span></header>
     <div class="card face-intro">
       <svg class="fi-mark" viewBox="0 0 120 140" aria-hidden="true"><ellipse cx="60" cy="70" rx="44" ry="58" fill="none" stroke="#2b2523" stroke-opacity=".35" stroke-width="1.2"/><path d="M40 46h40M56 92h8" stroke="#a9796d" stroke-width="1.2" stroke-linecap="round"/><circle cx="38" cy="78" r="9" fill="#a9796d" fill-opacity=".18"/><circle cx="82" cy="78" r="9" fill="#a9796d" fill-opacity=".18"/><path d="M60 52v26" stroke="#c4a050" stroke-opacity=".6" stroke-width="6" stroke-linecap="round"/></svg>
       <h2>얼굴 전체 분석</h2>
@@ -228,7 +230,7 @@
 
   <!-- 7. 얼굴 전체 분석 결과 -->
   <section id="screen-face" class="screen" aria-label="얼굴 분석 결과">
-    <header class="topbar"><button class="icon-btn plain" id="btn-face-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.5.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 분석</em></span><span class="date" id="face-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-face-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>얼굴 분석</em></span><span class="date" id="face-date"></span></header>
     <div class="card invalid-card face-invalid" id="face-invalid" role="alert" hidden>
       <canvas id="face-invalid-thumb" width="240" height="240" aria-hidden="true"></canvas>
       <h2>측정할 수 없는 사진이에요</h2>
@@ -274,7 +276,7 @@
 
   <!-- 8. 부위별 종합 안내 -->
   <section id="screen-zones-intro" class="screen" aria-label="부위별 종합 측정">
-    <header class="topbar"><button class="icon-btn plain" id="btn-zi-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.5.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>부위별 종합</em></span><span class="date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-zi-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>부위별 종합</em></span><span class="date"></span></header>
     <div class="card zi-card">
       <div class="zi-ill" id="zi-ill" aria-hidden="true"></div>
       <h2>부위별 종합 측정</h2>
@@ -297,7 +299,7 @@
 
   <!-- 9. 부위별 단계 결과 -->
   <section id="screen-zone-step" class="screen" aria-label="부위 측정 결과">
-    <header class="topbar"><button class="icon-btn plain" id="btn-zs-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.5.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>부위별 종합</em></span><span class="date" id="zs-prog"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-zs-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>부위별 종합</em></span><span class="date" id="zs-prog"></span></header>
     <div class="card zs-card">
       <div class="zs-head"><canvas id="zs-thumb" width="240" height="240" aria-hidden="true"></canvas><div><span class="rec-label" id="zs-label">1 / 5</span><b id="zs-name">이마</b><p id="zs-sum"></p></div></div>
       <div class="zs-metrics" id="zs-metrics"></div>
@@ -312,7 +314,7 @@
 
   <!-- 10. 부위별 종합 결과 -->
   <section id="screen-zones" class="screen" aria-label="부위별 종합 결과">
-    <header class="topbar"><button class="icon-btn plain" id="btn-zr-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.5.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>종합 결과</em></span><span class="date" id="zr-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-zr-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>종합 결과</em></span><span class="date" id="zr-date"></span></header>
     <div class="card score-card zr-score">
       <div class="ring" id="zr-ring" role="img" aria-label="종합 점수"><svg viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" class="track"/><circle cx="60" cy="60" r="52" class="bar" id="zr-ring-bar"/></svg>
         <div class="ring-text"><b id="zr-overall">0</b><small>부위별 종합 점수</small></div></div>
@@ -355,7 +357,7 @@
 
   <!-- 5. 전체 결과 리포트 -->
   <section id="screen-report" class="screen" aria-label="전체 결과 리포트">
-    <header class="topbar"><button class="icon-btn plain" id="btn-rep-back" aria-label="결과로 돌아가기">‹</button><span class="topbar-title"><img src="logo.svg?v=1.5.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>전체 결과 리포트</em></span><span class="date" id="rep-date"></span></header>
+    <header class="topbar"><button class="icon-btn plain" id="btn-rep-back" aria-label="결과로 돌아가기">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>전체 결과 리포트</em></span><span class="date" id="rep-date"></span></header>
     <div class="card rep-form">
       <label for="rep-name">이름(선택)</label>
       <input id="rep-name" type="text" maxlength="20" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="리포트에 표시할 이름">
@@ -366,6 +368,7 @@
       <div class="row">
         <button class="btn ghost" id="btn-rep-img">이미지로 저장</button>
         <button class="btn ghost" id="btn-rep-share">공유하기</button>
+        <button class="btn ghost" id="btn-rep-print">인쇄하기</button>
       </div>
     </div>
     <p class="rep-status" id="rep-status" role="status" aria-live="polite">리포트를 만드는 중…</p>
@@ -373,6 +376,55 @@
     <p class="disclaimer">리포트는 이 기기 안에서 만들어지며 서버로 전송되지 않아요. 참고용 결과이며 <b>의학적 진단이 아닙니다.</b></p>
   </section>
 
+
+  <!-- 직원 설정 (숨은 진입: 첫 화면 로고 2초 길게 누르기 또는 버전 표시 5번 탭) -->
+  <section id="screen-staff-pin" class="screen" aria-label="직원 설정 잠금">
+    <header class="topbar"><button class="icon-btn plain" id="btn-pin-home" aria-label="처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>직원 설정</em></span><span class="date"></span></header>
+    <div class="card pin-card">
+      <span class="kicker" id="pin-kicker">Staff only</span>
+      <h2 id="pin-title">PIN 4자리를 입력해 주세요</h2>
+      <p class="pin-msg" id="pin-msg" role="status" aria-live="polite"></p>
+      <div class="pin-dots" id="pin-dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <div class="pin-pad" id="pin-pad" role="group" aria-label="숫자 키패드">
+        <button type="button" data-k="1">1</button><button type="button" data-k="2">2</button><button type="button" data-k="3">3</button>
+        <button type="button" data-k="4">4</button><button type="button" data-k="5">5</button><button type="button" data-k="6">6</button>
+        <button type="button" data-k="7">7</button><button type="button" data-k="8">8</button><button type="button" data-k="9">9</button>
+        <button type="button" data-k="cancel" class="pk-sub">취소</button><button type="button" data-k="0">0</button><button type="button" data-k="del" class="pk-sub" aria-label="지우기">⌫</button>
+      </div>
+      <button type="button" class="btn text" id="btn-pin-later" hidden>나중에 바꾸기</button>
+      <p class="staff-note">간단한 기기 내 잠금이에요. 고객이 설정을 실수로 바꾸지 않도록 막는 용도이며 보안 장치는 아니에요.</p>
+    </div>
+  </section>
+  <section id="screen-staff" class="screen" aria-label="직원 설정">
+    <header class="topbar"><button class="icon-btn plain" id="btn-staff-home" aria-label="잠그고 처음으로">‹</button><span class="topbar-title"><img src="logo.svg?v=1.6.0" alt="H.O.W" class="topbar-logo" width="62" height="16"><em>직원 설정</em></span><span class="date">기기 설정</span></header>
+    <div class="card staff-warn" id="staff-defpin" hidden><b>기본 PIN(0000)을 사용 중이에요</b><p>고객이 설정을 바꾸지 않도록 PIN을 바꿔 주세요.</p><button type="button" class="btn ghost" id="btn-staff-pin2">PIN 바꾸기</button></div>
+    <div class="card staff-card">
+      <h3><span class="kicker">Auto reset</span>자동 초기화</h3>
+      <p class="staff-desc">아무도 화면을 만지지 않으면 결과를 지우고 처음 화면으로 돌아가요.</p>
+      <div class="seg" id="st-idle" role="radiogroup" aria-label="자동 초기화 시간"><button type="button" data-v="0">끔</button><button type="button" data-v="60">60초</button><button type="button" data-v="90">90초</button><button type="button" data-v="120">120초</button><button type="button" data-v="180">180초</button></div>
+      <h4>안내 카운트다운</h4>
+      <div class="seg" id="st-cd" role="radiogroup" aria-label="카운트다운 길이"><button type="button" data-v="10">10초</button><button type="button" data-v="15">15초</button><button type="button" data-v="20">20초</button><button type="button" data-v="30">30초</button></div>
+    </div>
+    <div class="card staff-card">
+      <h3><span class="kicker">Default mode</span>기본 측정 방식</h3>
+      <p class="staff-desc">첫 화면에서 미리 선택되고 ‘측정 시작하기’로 바로 시작돼요.</p>
+      <div class="seg" id="st-mode" role="radiogroup" aria-label="기본 측정 방식"><button type="button" data-v="quick">빠른 측정</button><button type="button" data-v="zones">부위별 종합</button><button type="button" data-v="face">얼굴 전체</button></div>
+    </div>
+    <div class="card staff-card">
+      <h3><span class="kicker">Store</span>매장 이름</h3>
+      <p class="staff-desc">리포트 표지와 하단에 표시돼요.</p>
+      <input type="text" id="st-store" class="st-input" maxlength="24" autocomplete="off" placeholder="예: H.O.W 강남점">
+      <label class="chk"><input type="checkbox" id="st-store-intro"><span>첫 화면에도 표시</span></label>
+    </div>
+    <div class="card staff-card">
+      <h3><span class="kicker">Security</span>잠금 · 초기화</h3>
+      <button type="button" class="btn ghost" id="btn-staff-pin">PIN 바꾸기</button>
+      <button type="button" class="btn text" id="btn-staff-reset">설정을 기본값으로 되돌리기</button>
+      <p class="staff-note">설정은 이 기기의 브라우저에만 저장돼요 (고객 정보 아님). ‘다음 고객’이나 자동 초기화로는 지워지지 않고, 브라우저 데이터를 지우면 PIN과 함께 초기화돼요. PIN을 5번 틀리면 30초 동안 입력할 수 없어요.</p>
+    </div>
+    <div class="actions"><button type="button" class="btn primary" id="btn-staff-done">저장하고 잠그기</button></div>
+    <footer class="app-foot"><button type="button" class="ver-label js-ver" aria-label="버전 정보, 눌러서 업데이트 확인">H.O.W 피부결 테스터 · <span class="js-ver-text">v</span></button></footer>
+  </section>
 </main>
   <div class="update-banner" id="update-banner" role="status" hidden><span id="update-text">새 버전이 있어요</span><button type="button" id="btn-update">업데이트</button><button type="button" class="ub-close" id="btn-update-close" aria-label="닫기">✕</button></div>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -382,6 +434,12 @@
     <p id="idle-desc"><b class="idle-sec" id="idle-sec">15</b>초 후 결과가 지워지고 다음 고객을 위해 처음 화면으로 돌아가요.</p>
     <button type="button" class="btn primary" id="btn-idle-stay">계속 보기</button><button type="button" class="btn text" id="btn-idle-reset">지금 처음으로</button>
   </div></div>
+  <div class="overlay" id="shoot-confirm" hidden role="alertdialog" aria-modal="true" aria-labelledby="sc-title"><div class="overlay-card">
+    <span class="kicker">Light</span><h2 id="sc-title">어두운 채로 촬영할까요?</h2>
+    <p id="sc-desc">조명이 어두우면 결과가 부정확하거나 측정할 수 없는 사진이 될 수 있어요.</p>
+    <button type="button" class="btn primary" id="btn-sc-cancel">밝게 한 뒤 다시 찍기</button><button type="button" class="btn text" id="btn-sc-ok">그대로 촬영</button>
+  </div></div>
+  <div class="print-root" id="print-root" aria-hidden="true"></div>
   <div class="overlay" id="recover" hidden role="alertdialog" aria-modal="true" aria-labelledby="recover-title"><div class="overlay-card">
     <span class="kicker">Notice</span><h2 id="recover-title">일시적인 문제가 생겼어요</h2>
     <p>사진과 결과는 저장되지 않았어요. 처음 화면에서 다시 시작해 주세요.</p>
@@ -389,8 +447,8 @@
   </div></div>
 </div>
 <canvas id="work-canvas" width="360" height="360" hidden></canvas>
-<script src="analyze.js?v=1.5.0"></script>
-<script src="recommend.js?v=1.5.0"></script>
-<script src="app.js?v=1.5.0"></script>
+<script src="analyze.js?v=1.6.0"></script>
+<script src="recommend.js?v=1.6.0"></script>
+<script src="app.js?v=1.6.0"></script>
 </body>
 </html>
