@@ -585,3 +585,43 @@ p,li,dd,.small,.disclaimer,.rec-note,.viz-legend{text-wrap:pretty}
 .zr-row.miss small{grid-column:1 / -1;font-size:12.5px;color:var(--sub)}
 .zr-row.miss .zr-n{color:var(--sub)}
 .no-flexgap .zr-m>*,.no-flexgap .zr-c>*{margin-right:14px}
+
+/* ===== v1.5.0 매장 안정화 · 버튼 배치 ===== */
+/* 긴 결과 화면 하단 고정 바 (원래 버튼 묶음이 안 보일 때만) */
+.dock{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:10px;max-width:480px;margin:0 auto;padding:10px 16px calc(10px + var(--safe-b));background:rgba(248,244,240,.96);border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(43,37,35,.06)}
+.dock[hidden]{display:none}
+.dock .btn{min-height:48px;padding:12px 10px;font-size:14.5px}
+.dock .dock-home{flex:0 0 38%;color:var(--sub);font-weight:500}
+.dock .dock-home.armed{color:var(--accent);border-color:var(--accent);font-size:12.5px;letter-spacing:0}
+.dock .btn.primary{flex:1}
+.no-flexgap .dock>*+*{margin-left:10px}
+body.has-dock .screen.active{padding-bottom:calc(96px + var(--safe-b))}
+@media (min-width:700px){.dock{max-width:560px;border-left:1px solid var(--line);border-right:1px solid var(--line)}}
+/* 단계 화면: 주요 버튼을 엄지 닿는 하단에 */
+#screen-zone-step.active{display:flex;flex-direction:column}
+#screen-zone-step .step-actions{margin-top:auto;position:-webkit-sticky;position:sticky;bottom:0;padding:14px 0 calc(6px + var(--safe-b));background:linear-gradient(rgba(248,244,240,0),var(--bg) 18px)}
+/* 결과 화면 버튼 묶음: 주요 → 보조 → (결과 삭제) 순서, 삭제는 간격을 두고 분리 */
+.actions.sticky .next-customer{margin-top:10px}
+/* 터치 영역 44px 이상 */
+.btn{min-height:44px}
+.btn.text{min-height:44px}
+.icon-btn.plain{width:44px;height:44px}
+.guide-link{min-height:44px}
+.face-link{min-height:44px}
+.season-pick button{min-height:44px}
+.rec-tabs [role=tab]{min-height:44px}
+.chk{min-height:44px;align-items:center}
+.chk input{margin-top:0}
+.ver-label{min-height:44px}
+/* 자동 초기화 · 오류 복구 안내 */
+.overlay{position:fixed;top:0;right:0;bottom:0;left:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(43,37,35,.42)}
+.overlay[hidden]{display:none}
+.overlay-card{width:100%;max-width:360px;background:var(--card);border:1px solid var(--line);padding:28px 24px 18px;text-align:center;box-shadow:0 18px 50px rgba(43,37,35,.18)}
+.overlay-card h2{font-size:19px;margin:2px 0 10px}
+.overlay-card p{font-size:14px;line-height:1.6;color:var(--sub);margin:0 0 20px}
+.overlay-card .btn+.btn{margin-top:6px}
+.idle-sec{font-family:var(--serif);font-weight:500;font-size:26px;color:var(--ink);margin-right:2px;vertical-align:-2px}
+.viz-tabs button{min-height:44px}
+.refresh-btn{min-height:44px}
+.mode-switch button{min-height:44px}
+@media (max-height:600px){.mode-switch button{min-height:44px;padding:4px 3px}}

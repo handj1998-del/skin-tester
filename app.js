@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.4.1';
+  const APP_VERSION = '1.5.0';
   const BUILD_DATE = '2026-10-04';
   window.APP_VERSION = APP_VERSION;
   (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
@@ -23,12 +23,13 @@
   function show(id) {
     try {
       if (id !== 'intro' && !(history.state && history.state.app)) history.pushState({ app: 1 }, '');
-      else if (id === 'intro' && history.state && history.state.app && !show._pop) { show._expectPop = true; history.back(); }
+      else if (id === 'intro' && history.state && history.state.app && !show._pop && !show._expectPop) { show._expectPop = true; history.back(); } // 연타 시 앱 밖으로 나가지 않게 한 번만
     } catch (e) {}
     show._pop = false;
     if (id === 'intro') wipeSession();
     document.querySelectorAll('.screen').forEach((s) => { const on = s.id === 'screen-' + id; s.classList.toggle('active', on); s.setAttribute('aria-hidden', on ? 'false' : 'true'); });
     window.scrollTo(0, 0);
+    try { armIdle(); updateDock(); if (id === 'analyzing') armWatchdog(); } catch (e) {} // 초기화 전 호출 무시
     const h = document.querySelector('#screen-' + id + ' h1, #screen-' + id + ' h2, #screen-' + id + ' .topbar span');
     if (h && id !== 'intro' && h.offsetParent) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (e) {} }
   }
@@ -213,7 +214,7 @@
   }
   let busy = false;
   function captureFromVideo() {
-    if (busy) return;
+    if (busy || activeId() !== 'camera') return;
     if (faceMode) return captureFace();
     if (zonesMode) return captureZone();
     const v = $('#video'); if (!v.videoWidth) return toast('카메라가 준비 중이에요');
@@ -440,14 +441,19 @@
   }
 
   // ---------- 세션 초기화 (다음 고객) ----------
+  function freeCanvas(c) { if (c && c.getContext) { c.width = 0; c.height = 0; } }
   function wipeSession() {
+    if (current) { // 이전 고객의 큰 캔버스 메모리를 바로 반환
+      freeCanvas(current.canvas);
+      if (current.zones) { current.zones.zones.forEach((z) => freeCanvas(z.canvas)); freeCanvas(current.zones.faceCanvas); }
+    }
     current = null; seasonChoice = 'auto'; recTab = 'care';
     if (typeof resetReport === 'function') resetReport();
     zoneSession = null; zonesMode = false; const zb = $('#btn-face-zskip'); if (zb) zb.hidden = true;
     ['#viz-canvas', '#invalid-thumb', '#face-map', '#face-invalid-thumb', '#scan-canvas', '#zr-map', '#zr-face-map', '#zs-thumb'].forEach((sel) => { const c = $(sel); if (c) c.getContext('2d').clearRect(0, 0, c.width, c.height); });
     ['#panel-care', '#panel-makeup', '#panel-color', '#metrics', '#face-zones', '#face-tu', '#zr-list', '#zr-tu', '#zr-best', '#zs-metrics', '#zs-reasons'].forEach((sel) => { const el = $(sel); if (el) el.innerHTML = ''; });
   }
-  function nextCustomer() { stopCamera(); exitFaceMode(); exitZonesMode(); show('intro'); window.scrollTo(0, 0); }
+  function nextCustomer() { stopCamera(); exitFaceMode(); exitZonesMode(); if (typeof stopIdle === 'function') stopIdle(); show('intro'); window.scrollTo(0, 0); if (pendingUpdate && !refreshing) hardRefresh(); }
 
   // ---------- 결과 이미지 ----------
   function buildShareImage() {
@@ -1023,10 +1029,10 @@
   $('#zi-eye').onchange = renderZonesIntroSteps; $('#zi-face').onchange = renderZonesIntroSteps;
   $('#btn-zi-home').onclick = () => show('intro');
   $('#btn-zones-start').onclick = startZones;
-  $('#btn-zone-skip').onclick = zoneSkip;
-  $('#btn-zs-next').onclick = zoneAdvance;
-  $('#btn-zs-retake').onclick = () => { if (zoneSession) startZoneStep(); };
-  $('#btn-zs-skip').onclick = () => { const s = zoneSession; if (!s) return; s.res[s.steps[s.idx].key] = { status: 'skipped' }; zoneAdvance(); };
+  $('#btn-zone-skip').onclick = onScreen('camera', zoneSkip);
+  $('#btn-zs-next').onclick = onScreen('zone-step', zoneAdvance);
+  $('#btn-zs-retake').onclick = onScreen('zone-step', () => { if (zoneSession) startZoneStep(); });
+  $('#btn-zs-skip').onclick = onScreen('zone-step', () => { const s = zoneSession; if (!s) return; s.res[s.steps[s.idx].key] = { status: 'skipped' }; zoneAdvance(); });
   $('#btn-zs-home').onclick = () => show('intro');
   $('#btn-zr-home').onclick = () => show('intro');
   $('#btn-zones-next').onclick = nextCustomer;
@@ -1036,6 +1042,7 @@
   // ---------- 전체 결과 리포트 (report.js는 필요할 때만 불러옴) ----------
   const APP_URL = 'https://handj1998-del.github.io/skin-tester/';
   function resetReport() {
+    if (reportPages) reportPages.forEach(freeCanvas);
     reportName = ''; reportPages = null; reportTimer && clearTimeout(reportTimer);
     const inp = $('#rep-name'); if (inp) inp.value = '';
     const pv = $('#rep-preview'); if (pv) pv.innerHTML = '';
@@ -1095,7 +1102,9 @@
     $('#rep-status').textContent = `A4 ${reportPages.length}쪽 · 미리보기`;
     return reportPages;
   }
+  let reportOpening = false;
   async function openReport() {
+    if (activeId() === 'report') return; // 연타 방지 (show('report')가 바로 화면을 바꿈)
     if (!current || (current.mode === 'face' ? current.face.invalid : current.mode === 'zones' ? !current.zones : current.result.invalid)) return;
     show('report');
     $('#rep-date').textContent = fmtDate(current.ts);
@@ -1162,10 +1171,108 @@
   const gl = document.querySelector('.guide-link');
   if (gl) gl.onclick = (e) => { e.preventDefault(); const g = $('#guide-card'); g.scrollIntoView({ behavior: 'smooth', block: 'start' }); g.setAttribute('tabindex', '-1'); try { g.focus({ preventScroll: true }); } catch (x) {} };
   // 안드로이드 뒤로가기: 앱을 닫지 않고 처음 화면으로
+
+  // ---------- v1.5.0 매장 안정화: 오류 복구 · 자동 초기화 · 하단 고정 버튼 ----------
+  function activeId() { const a = document.querySelector('.screen.active'); return a ? a.id.replace('screen-', '') : 'intro'; }
+  function onScreen(id, fn) { return function () { if (activeId() === id) return fn.apply(this, arguments); }; } // 연타·늦은 탭 방지
+  // 오류 → 빈 화면 대신 안내 후 처음으로
+  let fatalCount = 0;
+  function handleFatal(err) {
+    console.error('[recover]', err);
+    busy = false; reportOpening = false;
+    try { stopCamera(); } catch (e) {}
+    stopIdle();
+    $('#recover').hidden = false;
+    try { $('#btn-recover').focus(); } catch (e) {}
+  }
+  window.addEventListener('error', (e) => {
+    if (!e || e.target !== window && e.target && e.target.nodeType) return; // 리소스 로드 실패는 각 기능에서 처리
+    const f = e.filename || '', m = String(e.message || '');
+    if (/^Script error\.?$/.test(m) || /ResizeObserver loop/.test(m) || (f && f.indexOf(location.origin) !== 0)) return;
+    handleFatal(e.error || m);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    const r = e && e.reason;
+    if (r && /AbortError|NotAllowedError|NotSupportedError/.test(r.name || '')) return; // 동영상 재생 중단 등 무해
+    handleFatal(r);
+  });
+  $('#btn-recover').onclick = () => {
+    $('#recover').hidden = true; fatalCount++;
+    if (fatalCount >= 3) { try { location.reload(); } catch (e) {} return; } // 반복되면 새로 불러오기
+    try { nextCustomer(); } catch (e) { location.reload(); }
+  };
+  // 분석이 멈춘 경우 감시 (진행 표시가 60초 이상 변하지 않으면 복구)
+  let lastProgress = 0, watchT = 0;
+  faceListeners.push(() => { lastProgress = Date.now(); });
+  function armWatchdog() {
+    clearInterval(watchT); lastProgress = Date.now();
+    watchT = setInterval(() => {
+      if (activeId() !== 'analyzing') return clearInterval(watchT);
+      if (Date.now() - lastProgress > WATCH_MS) { clearInterval(watchT); handleFatal(new Error('analysis stalled')); }
+    }, 2000);
+  }
+  let WATCH_MS = 60000;
+  // 사용하지 않으면 자동으로 처음으로 (공용 기기 개인정보 보호)
+  const IDLE = { ms: 90000, sec: 15 };
+  const IDLE_SCREENS = ['result', 'invalid', 'face', 'zones', 'report', 'zone-step', 'zones-intro', 'face-intro', 'camera'];
+  let idleT = 0, cdT = 0, cdLeft = 0;
+  function armIdle() {
+    clearTimeout(idleT);
+    if (!$('#idle').hidden || IDLE_SCREENS.indexOf(activeId()) < 0) return;
+    idleT = setTimeout(startCountdown, IDLE.ms);
+  }
+  function startCountdown() {
+    if (busy || IDLE_SCREENS.indexOf(activeId()) < 0 || !$('#recover').hidden) return armIdle();
+    cdLeft = IDLE.sec; $('#idle').hidden = false; idleTick(); clearInterval(cdT); cdT = setInterval(idleTick, 1000);
+    try { $('#btn-idle-stay').focus(); } catch (e) {}
+  }
+  function idleTick() { $('#idle-sec').textContent = cdLeft; if (cdLeft-- <= 0) { stopIdle(); nextCustomer(); } }
+  function stopIdle() { clearInterval(cdT); clearTimeout(idleT); $('#idle').hidden = true; }
+  $('#btn-idle-stay').onclick = () => { stopIdle(); armIdle(); };
+  $('#btn-idle-reset').onclick = () => { stopIdle(); nextCustomer(); };
+  ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach((ev) => document.addEventListener(ev, (e) => {
+    if ($('#idle').hidden) armIdle();
+    else if (!e.target.closest || !e.target.closest('#idle .btn')) { stopIdle(); armIdle(); } // 카운트다운 중 아무 곳이나 누르면 계속
+  }, { passive: true, capture: true }));
+  // 긴 결과 화면: 원래 버튼 묶음이 안 보일 때만 하단에 '처음으로 / 리포트' 고정
+  const DOCK_SCREENS = { result: '#screen-result .actions.sticky', face: '#screen-face .actions.sticky', zones: '#screen-zones .actions.sticky' };
+  let dockVisible = {}, homeArmed = 0;
+  function updateDock() {
+    const id = activeId(), sel = DOCK_SCREENS[id], d = $('#dock');
+    let on = !!sel && !!current && $('#idle').hidden;
+    if (on && id === 'result' && current.result && current.result.invalid) on = false;
+    if (on && id === 'face' && current.face && current.face.invalid) on = false;
+    if (on && dockVisible[id]) on = false;
+    if (on) { const a = $(sel), r = a.getBoundingClientRect(); if (r.top < innerHeight && r.bottom > 0) on = false; }
+    d.hidden = !on; document.body.classList.toggle('has-dock', on);
+    if (!on) disarmHome();
+  }
+  function disarmHome() { homeArmed = 0; const b = $('#dock-home'); b.textContent = '처음으로'; b.classList.remove('armed'); }
+  if (window.IntersectionObserver) {
+    const io = new IntersectionObserver((es) => { es.forEach((e) => { const s = e.target.closest('.screen'); if (s) dockVisible[s.id.replace('screen-', '')] = e.isIntersecting; }); updateDock(); });
+    Object.keys(DOCK_SCREENS).forEach((k) => io.observe($(DOCK_SCREENS[k])));
+  }
+  window.addEventListener('scroll', () => { if (!window.IntersectionObserver) updateDock(); }, { passive: true });
+  $('#dock-report').onclick = () => openReport();
+  // 결과를 지우는 버튼이라 한 번 더 눌러야 실행 (실수 방지)
+  $('#dock-home').onclick = () => {
+    const b = $('#dock-home');
+    if (!homeArmed) { homeArmed = setTimeout(disarmHome, 3000); b.textContent = '한 번 더 누르면 처음으로'; b.classList.add('armed'); return; }
+    clearTimeout(homeArmed); disarmHome(); nextCustomer();
+  };
+  // 첫 화면 이후 리포트 모듈 미리 불러오기 (배포 중간 버전 섞임 방지)
+  window.addEventListener('load', () => setTimeout(() => { loadReportLib().catch(() => {}); }, 2500));
+
   window.addEventListener('popstate', () => {
     const onIntro = $('#screen-intro').classList.contains('active');
     if (show._expectPop) { show._expectPop = false; if (!onIntro) try { history.pushState({ app: 1 }, ''); } catch (e) {} return; }
-    if (!onIntro) { stopCamera(); show._pop = true; show('intro'); }
+    if (onIntro) return;
+    const id = activeId();
+    if (id === 'analyzing') { try { history.pushState({ app: 1 }, ''); } catch (e) {} return; } // 분석 중에는 무시
+    if (id === 'report' && current) return show(current.mode === 'face' ? 'face' : current.mode === 'zones' ? 'zones' : 'result');
+    if (id === 'camera') { show._pop = true; $('#btn-cam-close').click(); show._pop = false; return; }
+    if (id === 'zone-step' && zoneSession) { stopCamera(); exitZonesMode(); return openZonesIntro(); }
+    stopCamera(); show._pop = true; show('intro');
   });
   if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=' + APP_VERSION, { updateViaCache: 'none' }).then((r) => r.update && r.update()).catch(() => {}));
 
@@ -1176,7 +1283,7 @@
     for (let i = 0; i < Math.max(pa.length, pb.length); i++) { const d = (pa[i] || 0) - (pb[i] || 0); if (d) return d > 0 ? 1 : -1; }
     return 0;
   }
-  let refreshing = false;
+  let refreshing = false, pendingUpdate = null; // 새 버전은 다음 고객으로 넘어갈 때 자동 적용
   async function hardRefresh() {
     if (refreshing) return; refreshing = true;
     toast('최신 버전을 불러오는 중…');
@@ -1200,7 +1307,7 @@
   async function checkForUpdate(manual) {
     try {
       const j = await fetchLatest();
-      if (j && j.version && cmpVer(j.version, APP_VERSION) > 0) { showUpdateBanner(j.version); return true; }
+      if (j && j.version && cmpVer(j.version, APP_VERSION) > 0) { pendingUpdate = j.version; showUpdateBanner(j.version); return true; }
       if (manual) toast(`최신 버전이에요 (v${APP_VERSION})`);
     } catch (e) { if (manual) toast('지금은 업데이트를 확인할 수 없어요'); }
     return false;
@@ -1249,6 +1356,12 @@
       return { overall: Z.overall, grade: Z.grade.key, best: Z.best.name, worst: Z.worst.name, type: Z.type.name, T: Z.T, U: Z.U, typeSrc: Z.typeSrc, face: !!Z.face, skipped: Z.skipped,
         zones: Z.zones.map((z) => ({ key: z.key, status: z.status, overall: z.scores && z.scores.overall, red: z.redLevel, redRel: z.redRel, shine: z.shine })), care: current.care.priorityName, headline: current.care.headline, tips: current.care.zoneTips, finish: current.makeup.finish };
     },
+    setIdle: (ms, sec) => { IDLE.ms = ms; IDLE.sec = sec; armIdle(); },
+    setWatch: (ms) => { WATCH_MS = ms; },
+    fatal: (m) => { setTimeout(() => { throw new Error(m || 'test fatal'); }, 0); },
+    camLive: () => !!stream,
+    showScreen: (id) => show(id),
+    pendingUpdate: (v) => { pendingUpdate = v; },
     zoneStepOnly: async (url, i) => { if (!zoneSession) { openZonesIntro(); zoneSession = { steps: ZONE_DEF.slice(0, 5), idx: 0, res: {}, face: null, withFace: false, faceStep: false }; zonesMode = true; } zoneSession.idx = i || 0; const im = await loadImage(url); await runZone(await fromImage(im)); return zoneSession.res[zoneSession.steps[zoneSession.idx].key].status; },
     async faceUrl(url) { const im = await loadImage(url); await runFace(fromFaceImage(im), true); const f = current.face; return f.invalid ? { invalid: true, blockers: f.blockers } : { type: f.type, summary: f.summary, t: f.tShine, u: f.uShine, compact: window.HowFaceAnalyze.compact(f), care: current.care.priorityName, finish: current.makeup.finish, season: current.tone.season }; },
   };
