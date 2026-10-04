@@ -1,7 +1,7 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.6.0';
+  const APP_VERSION = '1.6.1';
   const BUILD_DATE = '2026-10-04';
   window.APP_VERSION = APP_VERSION;
   (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
@@ -267,7 +267,16 @@
     const f = e.target.files && e.target.files[0]; e.target.value = '';
     if (!f || busy) return;
     if (f.type && !/^image\//.test(f.type)) return toast('이미지 파일만 분석할 수 있어요');
-    const toFace = id === 'face-file' || (id === 'file-input2' && faceMode);
+    if (id === 'zu-cam' || id === 'zu-album') { // 부위별 · 사진으로 단계 촬영
+      if (!zoneSession) return show('intro');
+      const uurl = URL.createObjectURL(f), fs = zoneSession.faceStep;
+      try { const im = await loadImage(uurl); if (fs) runFace(fromFaceImage(im)); else runZone(await fromImage(im)); }
+      catch (err) { toast('사진을 불러오지 못했어요'); showZoneUp(); }
+      finally { setTimeout(() => URL.revokeObjectURL(uurl), 5000); }
+      return;
+    }
+    if (id === 'face-file-cam' || (id === 'face-file' && !zonesMode)) faceMode = true;
+    const toFace = id === 'face-file' || id === 'face-file-cam' || (id === 'file-input2' && faceMode);
     const toZone = id === 'file-input2' && zonesMode && !faceMode;
     if (!toFace && !toZone) { exitFaceMode(); exitZonesMode(); zoneSession = null; }
     stopCamera();
@@ -839,9 +848,14 @@
       return `<ellipse cx="${g[0] * 100}" cy="${g[1] * 112}" rx="${g[2] * 100}" ry="${g[3] * 112}" fill="${on ? '#a9796d' : done ? '#5f7d72' : 'none'}" fill-opacity="${on ? 0.85 : done ? 0.45 : 0}" stroke="${on ? '#a9796d' : 'currentColor'}" stroke-opacity="${on ? 1 : 0.45}" stroke-width="1"${on || done ? '' : ' stroke-dasharray="2 2"'}/>`; }).join('');
     return `<svg viewBox="0 0 100 112" aria-hidden="true"><ellipse cx="50" cy="59" rx="36" ry="50" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="1"/><path d="M33 41q6-3 12 0M55 41q6-3 12 0M42 78q8 4 16 0" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1" stroke-linecap="round"/>${zs}</svg>`;
   }
-  function openZonesIntro() {
+  let zoneSrc = null; // null: 실시간 카메라 · 'native': 카메라 앱 · 'album': 앨범
+  function openZonesIntro(src) {
     exitFaceMode(); wipeSession(); // 이전 결과는 새 측정을 시작하면 지움
+    zoneSrc = typeof src === 'string' ? src : null;
     show('zones-intro');
+    const sn = $('#zi-src-note'); sn.hidden = !zoneSrc;
+    sn.textContent = zoneSrc === 'album' ? '부위마다 앨범의 사진을 골라 올려요. 같은 장소 · 같은 조명에서 찍은 사진이 좋아요.' : '부위마다 휴대폰 카메라 앱으로 찍어 올려요. 앨범 사진으로 바꿔 올릴 수도 있어요.';
+    $('#btn-zones-start').textContent = zoneSrc ? '1단계부터 사진으로 시작하기' : '1단계부터 시작하기';
     const sup = faceSupported();
     $('#zi-face').disabled = !sup; $('#zi-face').checked = false; $('#zi-face-wrap').classList.toggle('off', !sup); $('#zi-face-note').hidden = sup;
     $('#zi-eye').checked = false;
@@ -855,7 +869,7 @@
   // 반드시 탭 핸들러에서 직접 호출 (카메라 권한)
   function startZones() {
     const steps = ZONE_DEF.filter((z) => z.key !== 'eye' || $('#zi-eye').checked);
-    zoneSession = { steps, idx: 0, res: {}, face: null, faceCanvas: null, withFace: $('#zi-face').checked && faceSupported(), faceStep: false };
+    zoneSession = { steps, idx: 0, res: {}, face: null, faceCanvas: null, withFace: $('#zi-face').checked && faceSupported(), faceStep: false, src: zoneSrc };
     if (zoneSession.withFace) loadFaceTools().catch(() => {}); // 미리 내려받기 (실패하면 얼굴 단계 건너뜀)
     startZoneStep();
   }
@@ -869,6 +883,7 @@
   function startZoneStep() {
     const s = zoneSession, z = s.steps[s.idx];
     zonesMode = true; s.faceStep = false; faceMode = false; facing = 'environment';
+    if (s.src) return showZoneUp();
     const cam = $('#screen-camera'); cam.classList.remove('face-mode'); cam.classList.add('zone-mode');
     $('#zone-step').textContent = `${s.idx + 1} / ${zoneTotal()}`; $('#zone-name').textContent = z.name;
     $('#zone-ill').innerHTML = zoneSVG(z.key, Object.keys(s.res).filter((k) => s.res[k].status === 'ok'), s.steps.map((q) => q.key));
@@ -879,10 +894,38 @@
   }
   function startZoneFaceStep() {
     const s = zoneSession; s.faceStep = true; zonesMode = true;
+    if (s.src) { faceMode = true; return showZoneUp(); }
     $('#zone-step').textContent = `${zoneTotal()} / ${zoneTotal()}`; $('#zone-name').textContent = '얼굴 전체';
     $('#zone-ill').innerHTML = zoneSVG(null, s.steps.map((q) => q.key), s.steps.map((q) => q.key)); zoneDots($('#zone-dots'));
     $('#btn-zone-skip').hidden = false; $('#btn-zone-skip').textContent = '얼굴 전체 건너뛰고 결과 보기';
     startFaceCamera(); $('#screen-camera').classList.add('zone-mode');
+  }
+  // 카메라 앱/앨범으로 한 부위씩 올리는 단계 화면 (파일 선택은 탭에서 바로 열려야 해서 label 사용)
+  function showZoneUp() {
+    const s = zoneSession; if (!s) return show('intro');
+    const face = s.faceStep, z = face ? null : s.steps[s.idx], n = face ? zoneTotal() : s.idx + 1, keys = s.steps.map((q) => q.key);
+    show('zone-up');
+    $('#zu-prog').textContent = `${n} / ${zoneTotal()}`; $('#zu-label').textContent = `${n} / ${zoneTotal()} 단계`;
+    $('#zu-name').textContent = face ? '얼굴 전체' : z.name;
+    $('#zu-tip').textContent = face ? '얼굴 전체가 나오게 정면으로 찍어 주세요' : z.tip.replace('사각형 안에', '사진 가운데에 가득');
+    $('#zu-ill').innerHTML = face ? zoneSVG(null, keys, keys) : zoneSVG(z.key, keys.filter((k) => s.res[k] && s.res[k].status === 'ok'), keys);
+    zoneDots($('#zu-dots'));
+    $('#zu-tips').innerHTML = face
+      ? '<li>얼굴 전체가 나오게 <b>정면</b>으로 · 앞머리는 넘겨요</li><li>창을 마주 보는 <b>밝고 고른 빛</b> · 플래시 끄기</li>'
+      : '<li>약 10cm 거리에서 <b>초점이 맞게</b> 찍어요 · 플래시 끄기</li><li>사진 <b>가운데 부분</b>을 분석해요 · 부위가 가운데에 가득 차게</li><li>모든 부위를 <b>같은 장소 · 같은 조명</b>에서 찍어요</li>';
+    $('#zu-cam').setAttribute('capture', face ? 'user' : 'environment');
+    const alb = s.src === 'album';
+    $('#zu-cam-lbl').className = alb ? 'btn ghost' : 'btn primary'; $('#zu-album-lbl').className = alb ? 'btn primary' : 'btn ghost';
+    const row = $('#screen-zone-up .step-actions .row'), act = row.parentNode; // 고른 방식이 위(주 버튼)로
+    if (alb) { act.insertBefore($('#zu-album-lbl'), row); row.insertBefore($('#zu-cam-lbl'), row.firstChild); }
+    else { act.insertBefore($('#zu-cam-lbl'), row); row.insertBefore($('#zu-album-lbl'), row.firstChild); }
+    $('#btn-zu-skip').textContent = face ? '건너뛰고 결과 보기' : '이 부위 건너뛰기';
+  }
+  function zoneUpBack() {
+    const s = zoneSession; if (!s) return show('intro');
+    if (s.faceStep) { exitFaceMode(); s.faceStep = false; return finishZones(); }
+    if (s.res[s.steps[s.idx].key]) return renderZoneStep();
+    exitZonesMode(); openZonesIntro(s.src);
   }
   function exitZonesMode() { zonesMode = false; $('#screen-camera').classList.remove('zone-mode'); $('#guide-tip').textContent = '볼 또는 이마를 사각형 안에'; }
   function colorStats(canvas) {
@@ -1036,12 +1079,14 @@
     moveRecCard('#zones-rec-slot');
     renderRecs();
   }
-  $('#btn-zones-mode').onclick = openZonesIntro;
+  $('#btn-zones-mode').onclick = () => openZonesIntro();
   $('#zi-eye').onchange = renderZonesIntroSteps; $('#zi-face').onchange = renderZonesIntroSteps;
   $('#btn-zi-home').onclick = () => show('intro');
   $('#btn-zones-start').onclick = startZones;
   $('#btn-zone-skip').onclick = onScreen('camera', zoneSkip);
   $('#btn-zs-next').onclick = onScreen('zone-step', zoneAdvance);
+  $('#btn-zu-skip').onclick = onScreen('zone-up', zoneSkip);
+  $('#btn-zu-back').onclick = onScreen('zone-up', zoneUpBack);
   $('#btn-zs-retake').onclick = onScreen('zone-step', () => { if (zoneSession) startZoneStep(); });
   $('#btn-zs-skip').onclick = onScreen('zone-step', () => { const s = zoneSession; if (!s) return; s.res[s.steps[s.idx].key] = { status: 'skipped' }; zoneAdvance(); });
   $('#btn-zs-home').onclick = () => show('intro');
@@ -1175,7 +1220,7 @@
     torchOn = !torchOn; try { await t.applyConstraints({ advanced: [{ torch: torchOn }] }); } catch (e) { torchOn = false; toast('조명을 켤 수 없어요'); }
   };
   $('#btn-cam-close').onclick = $('#btn-cam-back').onclick = () => { stopCamera(); if (zonesMode && zoneSession) { const s = zoneSession, r = s.res[s.steps[s.idx].key]; if (s.faceStep) { exitFaceMode(); $('#screen-camera').classList.add('zone-mode'); s.faceStep = false; return finishZones(); } if (r) return renderZoneStep(); exitZonesMode(); return openZonesIntro(); } if (faceMode) show('face-intro'); else show('intro'); };
-  ['#file-input', '#file-input2', '#file-input3', '#face-file'].forEach((id) => { const el = $(id); if (el) el.onchange = onFile; });
+  ['#file-input', '#file-input2', '#file-input3', '#face-file', '#face-file-cam', '#zu-cam', '#zu-album'].forEach((id) => { const el = $(id); if (el) el.onchange = onFile; });
   $('#btn-copy-link').onclick = copyLink;
   $('#btn-cam-retry').onclick = startCamera;
   $('#tap-to-play').onclick = () => { const v = $('#video'); v.play().then(() => ($('#tap-to-play').hidden = true)).catch(() => camError('unknown')); };
@@ -1226,7 +1271,7 @@
   let WATCH_MS = 60000;
   // 사용하지 않으면 자동으로 처음으로 (공용 기기 개인정보 보호)
   const IDLE = { ms: 90000, sec: 15 };
-  const IDLE_SCREENS = ['result', 'invalid', 'face', 'zones', 'report', 'zone-step', 'zones-intro', 'face-intro', 'camera', 'staff', 'staff-pin'];
+  const IDLE_SCREENS = ['result', 'invalid', 'face', 'zones', 'report', 'zone-step', 'zone-up', 'zones-intro', 'face-intro', 'camera', 'staff', 'staff-pin'];
   let idleT = 0, cdT = 0, cdLeft = 0;
   function armIdle() {
     clearTimeout(idleT);
@@ -1347,7 +1392,17 @@
   function markIntroMode() {
     [['quick', '#btn-mode-quick'], ['zones', '#btn-zones-mode'], ['face', '#btn-face-mode']].forEach((q) => { const b = $(q[1]), on = q[0] === introMode; b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); });
     $('#btn-start').textContent = introMode === 'zones' ? '부위별 종합 시작하기' : introMode === 'face' ? '얼굴 전체 분석 시작하기' : '측정 시작하기';
+    // 카메라 앱 · 앨범 버튼도 고른 방식을 따름 (부위별은 클릭 핸들러에서 단계 흐름으로)
+    const face = introMode === 'face';
+    $('#intro-cam-lbl').htmlFor = face ? 'face-file-cam' : 'file-input'; $('#intro-album-lbl').htmlFor = face ? 'face-file' : 'file-input3';
   }
+  ['#intro-cam-lbl', '#intro-album-lbl'].forEach((sel, i) => $(sel).addEventListener('click', (e) => {
+    if (introMode === 'zones') { e.preventDefault(); return openZonesIntro(i ? 'album' : 'native'); }
+    if (introMode === 'face') {
+      if (!faceSupported()) { e.preventDefault(); return openFaceIntro(); } // 안내 화면
+      loadFaceTools().catch(() => {}); // 사진 고르는 동안 미리 내려받기
+    }
+  }));
   // SHA-256 (SubtleCrypto, 없으면 JS 구현)
   function sha256js(str) {
     const b = unescape(encodeURIComponent(str)), K = [], H = [1779033703, -1150833019, 1013904242, -1521486534, 1359893119, -1694144372, 528734635, 1541459225];
@@ -1490,7 +1545,8 @@
     if (id === 'analyzing') { try { history.pushState({ app: 1 }, ''); } catch (e) {} return; } // 분석 중에는 무시
     if (id === 'report' && current) return show(current.mode === 'face' ? 'face' : current.mode === 'zones' ? 'zones' : 'result');
     if (id === 'camera') { show._pop = true; $('#btn-cam-close').click(); show._pop = false; return; }
-    if (id === 'zone-step' && zoneSession) { stopCamera(); exitZonesMode(); return openZonesIntro(); }
+    if (id === 'zone-step' && zoneSession) { stopCamera(); exitZonesMode(); return openZonesIntro(zoneSession.src); }
+    if (id === 'zone-up' && zoneSession) return zoneUpBack();
     stopCamera(); show._pop = true; show('intro');
   });
   if ('serviceWorker' in navigator && location.protocol === 'https:') window.addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=' + APP_VERSION, { updateViaCache: 'none' }).then((r) => r.update && r.update()).catch(() => {}));
@@ -1586,6 +1642,8 @@
     staff: () => JSON.parse(JSON.stringify(staff)),
     sha: async (t) => ({ js: sha256js(t), native: await sha256(t) }),
     pendingUpdate: (v) => { pendingUpdate = v; },
+    introMode: () => introMode,
+    zoneSrc: () => zoneSession && zoneSession.src,
     zoneStepOnly: async (url, i) => { if (!zoneSession) { openZonesIntro(); zoneSession = { steps: ZONE_DEF.slice(0, 5), idx: 0, res: {}, face: null, withFace: false, faceStep: false }; zonesMode = true; } zoneSession.idx = i || 0; const im = await loadImage(url); await runZone(await fromImage(im)); return zoneSession.res[zoneSession.steps[zoneSession.idx].key].status; },
     async faceUrl(url) { const im = await loadImage(url); await runFace(fromFaceImage(im), true); const f = current.face; return f.invalid ? { invalid: true, blockers: f.blockers } : { type: f.type, summary: f.summary, t: f.tShine, u: f.uShine, compact: window.HowFaceAnalyze.compact(f), care: current.care.priorityName, finish: current.makeup.finish, season: current.tone.season }; },
   };

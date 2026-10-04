@@ -598,8 +598,8 @@ p,li,dd,.small,.disclaimer,.rec-note,.viz-legend{text-wrap:pretty}
 body.has-dock .screen.active{padding-bottom:calc(96px + var(--safe-b))}
 @media (min-width:700px){.dock{max-width:560px;border-left:1px solid var(--line);border-right:1px solid var(--line)}}
 /* 단계 화면: 주요 버튼을 엄지 닿는 하단에 */
-#screen-zone-step.active{display:flex;flex-direction:column}
-#screen-zone-step .step-actions{margin-top:auto;position:-webkit-sticky;position:sticky;bottom:0;padding:14px 0 calc(6px + var(--safe-b));background:linear-gradient(rgba(248,244,240,0),var(--bg) 18px)}
+#screen-zone-step.active,#screen-zone-up.active{display:flex;flex-direction:column}
+#screen-zone-step .step-actions,#screen-zone-up .step-actions{margin-top:auto;position:-webkit-sticky;position:sticky;bottom:0;padding:14px 0 calc(6px + var(--safe-b));background:linear-gradient(rgba(248,244,240,0),var(--bg) 18px)}
 /* 결과 화면 버튼 묶음: 주요 → 보조 → (결과 삭제) 순서, 삭제는 간격을 두고 분리 */
 .actions.sticky .next-customer{margin-top:10px}
 /* 터치 영역 44px 이상 */
@@ -681,3 +681,9 @@ body.has-dock .screen.active{padding-bottom:calc(96px + var(--safe-b))}
 #screen-camera.zone-mode .light-warn{top:calc(124px + var(--safe-t))}
 .shutter.dim{opacity:.45}
 .no-flexgap .light-warn>*+*{margin-left:10px}
+
+/* 부위별 · 사진으로 촬영 단계 */
+.zu-card .zi-ill{margin-bottom:10px}
+.zu-card h2{margin:4px 0 6px}
+.zu-card .zs-dots{margin-top:12px}
+.zi-src{color:var(--ink);margin:0 0 12px}
