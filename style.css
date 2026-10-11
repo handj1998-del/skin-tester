@@ -698,3 +698,13 @@ body.has-dock .screen.active{padding-bottom:calc(96px + var(--safe-b))}
   @media (max-height:680px){.intro-fold .hero-seal{width:210px;height:auto}}
   @media (min-height:800px){.intro-fold .hero-seal{width:300px;height:auto}}
 }
+
+/* v1.7.1 로고 60% 크기 */
+.hero-seal,.intro-fold .hero-seal{width:min(48vw,192px);margin:0 auto 26px;padding:8px 12px;box-sizing:content-box}
+.intro-fold .hero-seal{margin:0 auto clamp(16px,3.4svh,30px)}
+.topbar-logo{height:12px;vertical-align:-1px}
+@supports not (aspect-ratio:1){
+  .hero-seal,.intro-fold .hero-seal{width:156px;height:auto}
+  @media (max-height:680px){.intro-fold .hero-seal{width:126px;height:auto}}
+  @media (min-height:800px){.intro-fold .hero-seal{width:180px;height:auto}}
+}
