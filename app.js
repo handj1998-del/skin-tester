@@ -1,8 +1,8 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.6.1';
-  const BUILD_DATE = '2026-10-04';
+  const APP_VERSION = '1.7.0';
+  const BUILD_DATE = '2026-10-11';
   window.APP_VERSION = APP_VERSION;
   (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
   const $ = (s) => document.querySelector(s);
@@ -317,7 +317,7 @@
     lines: { ic: '03', t: '잔주름 케어', p: '건조로 생기는 잔주름은 수분 공급이 우선! 히알루론산 세럼 + 크림으로 수분을 잠그고, 낮에는 자외선 차단제를 꼭 덧발라 주세요. 레티놀은 저농도부터 천천히.' },
     good: { ic: '—', t: '지금처럼 유지해요', p: '좋은 피부결이에요. 충분한 수면과 수분 섭취, 매일 자외선 차단을 지켜주세요. 같은 조건으로 주 1회 측정하면 변화를 확인할 수 있어요.' },
   };
-  const TONE = { good: '#5f7d72', mid: '#a58a55', low: '#a3604f', ink: '#2b2523', acc: '#a9796d' };
+  const TONE = { good: '#5f7d72', mid: '#a58a55', low: '#a3604f', ink: '#2b2523', acc: '#a86a6c' };
   function toneOf(s) { return s >= 75 ? TONE.good : s >= 55 ? TONE.mid : TONE.low; }
   function barColor(s) { return toneOf(s); }
   function label(s) { return s >= 85 ? '아주 좋음' : s >= 70 ? '좋음' : s >= 55 ? '보통' : s >= 40 ? '관리 필요' : '집중 관리'; }
@@ -484,11 +484,11 @@
     x.fillStyle = '#f6f2ee'; x.fillRect(0, 0, W, H);
     const F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif';
     const SERIF = '"Cormorant Garamond", Georgia, "Times New Roman", serif';
-    const INK = '#2b2523', SUB = '#6f6560', ACC = '#a9796d', LINE = 'rgba(43,37,35,.14)';
+    const INK = '#2b2523', SUB = '#6f6560', ACC = '#a86a6c', LINE = 'rgba(43,37,35,.14)';
     // 테두리 프레임
     x.strokeStyle = LINE; x.lineWidth = 2; x.strokeRect(48, 48, W - 96, H - 96);
     x.textAlign = 'center';
-    if (LOGO.complete && LOGO.naturalWidth) { const lw = 250, lh = lw * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, W / 2 - lw / 2, 120, lw, lh); }
+    if (LOGO_FULL.complete && LOGO_FULL.naturalWidth) { const lw = 260, lh = lw * LOGO_FULL.naturalHeight / LOGO_FULL.naturalWidth; x.drawImage(LOGO_FULL, W / 2 - lw / 2, 100, lw, lh); }
     else { x.fillStyle = INK; x.font = `600 72px ${F}`; x.fillText('H.O.W', W / 2, 185); }
     x.fillStyle = SUB; x.font = `500 26px ${F}`; spaced(x, '피부결 리포트', W / 2, 262, 8);
     const d = new Date(ts); x.font = `400 30px ${SERIF}`; x.fillStyle = SUB; x.fillText(`${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}`, W / 2, 308);
@@ -526,7 +526,8 @@
     let px = cx - total / 2; chars.forEach((ch, i) => { x.fillText(ch, px, y); px += widths[i] + sp; });
     x.textAlign = al;
   }
-  const LOGO = new Image(); LOGO.src = 'logo.svg?v=' + APP_VERSION;
+  const LOGO = new Image(); LOGO.src = 'logo@3x.png?v=' + APP_VERSION;
+  const LOGO_FULL = new Image(); LOGO_FULL.src = 'logo-full@3x.png?v=' + APP_VERSION; // PERSONAL COLOR STUDIO 포함
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   let sharing = false;
   async function shareResult() {
@@ -782,11 +783,11 @@
     const f = current.face, W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
     const x = c.getContext('2d');
     const F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif', SERIF = '"Cormorant Garamond", Georgia, serif';
-    const INK = '#2b2523', SUB = '#6f6560', ACC = '#a9796d', LINE = 'rgba(43,37,35,.14)';
+    const INK = '#2b2523', SUB = '#6f6560', ACC = '#a86a6c', LINE = 'rgba(43,37,35,.14)';
     x.fillStyle = '#f6f2ee'; x.fillRect(0, 0, W, H);
     x.strokeStyle = LINE; x.lineWidth = 2; x.strokeRect(48, 48, W - 96, H - 96);
     x.textAlign = 'center';
-    if (LOGO.complete && LOGO.naturalWidth) { const lw = 250, lh = lw * LOGO.naturalHeight / LOGO.naturalWidth; x.drawImage(LOGO, W / 2 - lw / 2, 120, lw, lh); }
+    if (LOGO_FULL.complete && LOGO_FULL.naturalWidth) { const lw = 260, lh = lw * LOGO_FULL.naturalHeight / LOGO_FULL.naturalWidth; x.drawImage(LOGO_FULL, W / 2 - lw / 2, 100, lw, lh); }
     else { x.fillStyle = INK; x.font = `600 72px ${F}`; x.fillText('H.O.W', W / 2, 185); }
     x.fillStyle = SUB; x.font = `500 26px ${F}`; spaced(x, '얼굴 피부 리포트', W / 2, 262, 8);
     const d = new Date(current.ts); x.font = `400 30px ${SERIF}`; x.fillText(`${d.getFullYear()}. ${String(d.getMonth() + 1).padStart(2, '0')}. ${String(d.getDate()).padStart(2, '0')}`, W / 2, 308);
@@ -845,7 +846,7 @@
   function zoneSVG(active, doneKeys, all) {
     const keys = all || ZONE_DEF.map((z) => z.key);
     const zs = keys.map((k) => { const g = ZONE_GEO[k], on = k === active, done = doneKeys && doneKeys.indexOf(k) >= 0;
-      return `<ellipse cx="${g[0] * 100}" cy="${g[1] * 112}" rx="${g[2] * 100}" ry="${g[3] * 112}" fill="${on ? '#a9796d' : done ? '#5f7d72' : 'none'}" fill-opacity="${on ? 0.85 : done ? 0.45 : 0}" stroke="${on ? '#a9796d' : 'currentColor'}" stroke-opacity="${on ? 1 : 0.45}" stroke-width="1"${on || done ? '' : ' stroke-dasharray="2 2"'}/>`; }).join('');
+      return `<ellipse cx="${g[0] * 100}" cy="${g[1] * 112}" rx="${g[2] * 100}" ry="${g[3] * 112}" fill="${on ? '#a86a6c' : done ? '#5f7d72' : 'none'}" fill-opacity="${on ? 0.85 : done ? 0.45 : 0}" stroke="${on ? '#a86a6c' : 'currentColor'}" stroke-opacity="${on ? 1 : 0.45}" stroke-width="1"${on || done ? '' : ' stroke-dasharray="2 2"'}/>`; }).join('');
     return `<svg viewBox="0 0 100 112" aria-hidden="true"><ellipse cx="50" cy="59" rx="36" ry="50" fill="none" stroke="currentColor" stroke-opacity=".55" stroke-width="1"/><path d="M33 41q6-3 12 0M55 41q6-3 12 0M42 78q8 4 16 0" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="1" stroke-linecap="round"/>${zs}</svg>`;
   }
   let zoneSrc = null; // null: 실시간 카메라 · 'native': 카메라 앱 · 'album': 앨범
@@ -1113,7 +1114,7 @@
   function reportData() {
     const isFace = current.mode === 'face', S = REC.SEASONS[currentSeason()];
     const d = {
-      mode: isFace ? 'face' : current.mode === 'zones' ? 'zones' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO,
+      mode: isFace ? 'face' : current.mode === 'zones' ? 'zones' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO, logoFull: LOGO_FULL,
       title: isFace ? '얼굴 피부 분석 리포트' : current.mode === 'zones' ? '부위별 종합 리포트' : '피부결 분석 리포트',
       care: current.care, makeup: current.makeup, tone: current.tone, season: S, estSeason: REC.SEASONS[current.tone.season], seasonChosen: getSeasonChoice() !== 'auto',
       skinRGB: current.skinRGB.map((v) => Math.round(v)), store: staff.store || '',
@@ -1152,7 +1153,7 @@
   async function buildReport() {
     const R = await loadReportLib();
     try { await Promise.all([document.fonts.load('300 110px "Cormorant Garamond"'), document.fonts.load('500 24px "Cormorant Garamond"')]); } catch (e) {}
-    if (!LOGO.complete) await new Promise((r) => { LOGO.onload = LOGO.onerror = r; setTimeout(r, 1500); });
+    for (const im of [LOGO, LOGO_FULL]) if (!im.complete) await new Promise((r) => { im.onload = im.onerror = r; setTimeout(r, 1500); });
     reportPages = R.render(reportData());
     const pv = $('#rep-preview'); pv.innerHTML = '';
     reportPages.forEach((c, i) => { c.setAttribute('role', 'img'); c.setAttribute('aria-label', `리포트 ${i + 1}쪽`); c.className = 'rep-page'; pv.appendChild(c); });
@@ -1613,6 +1614,8 @@
     reportPdfBase64: async () => { if (!reportPages) await buildReport(); const b = await reportPdfBlob(); return new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(b); }); },
     reportImageBase64: async () => { if (!reportPages) await buildReport(); const b = await reportImageBlob(); return new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(b); }); },
     reportPages: () => reportPages && reportPages.length,
+    shareCard: () => (current && current.mode === 'face' ? buildFaceShareImage() : buildShareImage()).toDataURL('image/jpeg', 0.85),
+    reportCover: async () => { if (!reportPages) await buildReport(); return reportPages[0].toDataURL('image/jpeg', 0.85); },
     state: () => ({ current: !!current, season: seasonChoice, name: reportName, ls: (() => { try { return Object.keys(localStorage); } catch (e) { return []; } })() }),
     setSeason: (v) => { setSeasonChoice(v); },
     async zonesRun(urls, faceUrl, eye) {

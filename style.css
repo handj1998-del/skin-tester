@@ -182,7 +182,7 @@ a.btn{text-decoration:none}
 @font-face{font-family:"Cormorant Garamond";font-weight:500 700;font-style:normal;font-display:swap;src:url(fonts/cg500.woff2) format("woff2")}
 :root{
   --bg:#f6f2ee; --card:#fdfbf9; --ink:#2b2523; --sub:#6f6560; --line:#e7dfd8;
-  --rose:#a9796d; --rose-d:#8e6458; --accent:#a9796d;
+  --rose:#a86a6c; --rose-d:#8c5658; --accent:#a86a6c;
   --serif:"Cormorant Garamond",Georgia,"Times New Roman",serif;
   --radius:4px; --shadow:none;
 }
@@ -687,3 +687,14 @@ body.has-dock .screen.active{padding-bottom:calc(96px + var(--safe-b))}
 .zu-card h2{margin:4px 0 6px}
 .zu-card .zs-dots{margin-top:12px}
 .zi-src{color:var(--ink);margin:0 0 12px}
+
+/* v1.7.0 컬러 로고 (원형 테두리 없이 크림 배경 위에) */
+.hero-seal,.intro-fold .hero-seal{display:block;aspect-ratio:auto;height:auto;width:min(80vw,320px);margin:4px auto 22px}
+.intro-fold .hero-seal{width:min(80vw,320px,max(190px,calc((100vh - 420px) * 2.2)));width:min(80vw,320px,max(190px,calc((100svh - 420px) * 2.2)));margin:0 auto clamp(14px,3svh,26px)}
+.hero-logo,.intro-fold .hero-logo{display:block;width:100%;height:auto}
+.topbar-logo{height:20px;width:auto;vertical-align:-4px}
+@supports not (aspect-ratio:1){
+  .hero-seal,.intro-fold .hero-seal{width:260px;height:auto}
+  @media (max-height:680px){.intro-fold .hero-seal{width:210px;height:auto}}
+  @media (min-height:800px){.intro-fold .hero-seal{width:300px;height:auto}}
+}

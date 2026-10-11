@@ -5,7 +5,7 @@
   var W = 1240, H = 1754, M = 96, CW = W - M * 2, TOP = 150, BOTTOM = H - 110; // A4 @150dpi
   var F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans CJK KR", "Malgun Gothic", sans-serif';
   var SERIF = '"Cormorant Garamond", Georgia, "Times New Roman", serif';
-  var INK = '#2b2523', SUB = '#6f6560', MUTE = '#8b807a', ACC = '#a9796d', LINE = 'rgba(43,37,35,.14)', SOFT = '#f6f2ee', CARD = '#fbf8f5';
+  var INK = '#2b2523', SUB = '#6f6560', MUTE = '#8b807a', ACC = '#a86a6c', LINE = 'rgba(43,37,35,.14)', SOFT = '#f6f2ee', CARD = '#fbf8f5';
   var TYPE_DESC = {
     oily: 'T존과 볼 모두 빛 반사(광택)가 많은 편이라 지성 경향으로 보여요. 유분 조절과 가벼운 보습의 균형이 중요해요.',
     combo: 'T존(이마·코)은 광택이 많고 볼은 상대적으로 적어 복합성 경향으로 보여요. 구역별로 케어를 나누면 좋아요.',
@@ -52,7 +52,7 @@
   Doc.prototype.ensure = function (h) { if (this.y + h > BOTTOM) { this.newPage(); return true; } return false; };
   Doc.prototype.runningHeader = function () {
     var x = this.x, d = this.d, L = d.logo;
-    if (L && L.naturalWidth) { var lw = 104, lh = lw * L.naturalHeight / L.naturalWidth; x.drawImage(L, M, 62, lw, lh); }
+    if (L && L.naturalWidth) { var lw = 92, lh = lw * L.naturalHeight / L.naturalWidth; x.drawImage(L, M, 56, lw, lh); }
     else { font(x, 600, 26); x.fillStyle = INK; x.fillText('H.O.W', M, 84); }
     font(x, 500, 19); x.fillStyle = MUTE; x.textAlign = 'right';
     x.fillText((d.name ? d.name + ' 님 · ' : '') + d.title + ' · ' + fmtFull(d.ts).split('  ')[0], W - M, 82); x.textAlign = 'left';
@@ -197,9 +197,9 @@
 
   // ---------- 표지 (1페이지 상단) ----------
   function cover(doc) {
-    var x = doc.x, d = doc.d, L = d.logo, y = 110;
+    var x = doc.x, d = doc.d, L = d.logoFull || d.logo, y = 70;
     x.fillStyle = SOFT; x.fillRect(0, 0, W, 560);
-    if (L && L.naturalWidth) { var lw = 230, lh = lw * L.naturalHeight / L.naturalWidth; x.drawImage(L, W / 2 - lw / 2, y, lw, lh); y += lh; }
+    if (L && L.naturalWidth) { var lw = 270, lh = lw * L.naturalHeight / L.naturalWidth; x.drawImage(L, W / 2 - lw / 2, y, lw, lh); y += lh; }
     else { font(x, 600, 64); x.fillStyle = INK; x.textAlign = 'center'; x.fillText('H.O.W', W / 2, y + 60); x.textAlign = 'left'; y += 70; }
     font(x, 600, 17); x.fillStyle = ACC; x.textAlign = 'center'; spaced(x, d.mode === 'face' ? 'FACE SKIN REPORT' : d.mode === 'zones' ? 'ZONE SKIN REPORT' : 'SKIN TEXTURE REPORT', W / 2, y + 62, 6, 'center');
     font(x, 600, 46); x.fillStyle = INK; x.fillText(d.title, W / 2, y + 128);
