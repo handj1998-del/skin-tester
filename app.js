@@ -1,8 +1,8 @@
 (function () {
   'use strict';
   // ===== 버전: 단일 기준값 (sw.js 캐시 이름도 이 값을 사용, version.json과 함께 갱신) =====
-  const APP_VERSION = '1.7.1';
-  const BUILD_DATE = '2026-10-12';
+  const APP_VERSION = '1.8.0';
+  const BUILD_DATE = '2026-10-13';
   window.APP_VERSION = APP_VERSION;
   (function () { try { var f = document.createElement('div'); f.style.cssText = 'display:flex;flex-direction:column;row-gap:1px;position:absolute;visibility:hidden'; f.appendChild(document.createElement('div')); f.appendChild(document.createElement('div')); document.body.appendChild(f); var ok = f.scrollHeight === 1; f.remove(); if (!ok) document.documentElement.classList.add('no-flexgap'); } catch (e) {} })();
   const $ = (s) => document.querySelector(s);
@@ -485,6 +485,7 @@
     const F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif';
     const SERIF = '"Cormorant Garamond", Georgia, "Times New Roman", serif';
     const INK = '#2b2523', SUB = '#6f6560', ACC = '#a86a6c', LINE = 'rgba(43,37,35,.14)';
+    drawMotif(x, W, H, 1);
     // 테두리 프레임
     x.strokeStyle = LINE; x.lineWidth = 2; x.strokeRect(48, 48, W - 96, H - 96);
     x.textAlign = 'center';
@@ -527,6 +528,8 @@
     x.textAlign = al;
   }
   const LOGO = new Image(); LOGO.src = 'logo@3x.png?v=' + APP_VERSION;
+  const MOTIF = new Image(); MOTIF.src = 'motif.png?v=' + APP_VERSION; // 로고 글자에서 뽑은 수채 워시 (앱 · 리포트 · 공유 카드 공통)
+  function drawMotif(x, W, H, alpha) { if (!(MOTIF.complete && MOTIF.naturalWidth)) return; x.save(); x.globalAlpha = alpha || 1; const h = W * MOTIF.naturalHeight / MOTIF.naturalWidth; x.drawImage(MOTIF, 0, 0, W, h); x.restore(); }
   const LOGO_FULL = new Image(); LOGO_FULL.src = 'logo-full@3x.png?v=' + APP_VERSION; // PERSONAL COLOR STUDIO 포함
   function rr(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   let sharing = false;
@@ -784,7 +787,7 @@
     const x = c.getContext('2d');
     const F = 'Pretendard, -apple-system, "Apple SD Gothic Neo", sans-serif', SERIF = '"Cormorant Garamond", Georgia, serif';
     const INK = '#2b2523', SUB = '#6f6560', ACC = '#a86a6c', LINE = 'rgba(43,37,35,.14)';
-    x.fillStyle = '#f6f2ee'; x.fillRect(0, 0, W, H);
+    x.fillStyle = '#f6f2ee'; x.fillRect(0, 0, W, H); drawMotif(x, W, H, 1);
     x.strokeStyle = LINE; x.lineWidth = 2; x.strokeRect(48, 48, W - 96, H - 96);
     x.textAlign = 'center';
     if (LOGO_FULL.complete && LOGO_FULL.naturalWidth) { const lw = 260, lh = lw * LOGO_FULL.naturalHeight / LOGO_FULL.naturalWidth; x.drawImage(LOGO_FULL, W / 2 - lw / 2, 100, lw, lh); }
@@ -1114,7 +1117,7 @@
   function reportData() {
     const isFace = current.mode === 'face', S = REC.SEASONS[currentSeason()];
     const d = {
-      mode: isFace ? 'face' : current.mode === 'zones' ? 'zones' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO, logoFull: LOGO_FULL,
+      mode: isFace ? 'face' : current.mode === 'zones' ? 'zones' : 'closeup', ts: current.ts, name: reportName.trim(), version: APP_VERSION, url: APP_URL, logo: LOGO, logoFull: LOGO_FULL, motif: MOTIF,
       title: isFace ? '얼굴 피부 분석 리포트' : current.mode === 'zones' ? '부위별 종합 리포트' : '피부결 분석 리포트',
       care: current.care, makeup: current.makeup, tone: current.tone, season: S, estSeason: REC.SEASONS[current.tone.season], seasonChosen: getSeasonChoice() !== 'auto',
       skinRGB: current.skinRGB.map((v) => Math.round(v)), store: staff.store || '',
@@ -1153,7 +1156,7 @@
   async function buildReport() {
     const R = await loadReportLib();
     try { await Promise.all([document.fonts.load('300 110px "Cormorant Garamond"'), document.fonts.load('500 24px "Cormorant Garamond"')]); } catch (e) {}
-    for (const im of [LOGO, LOGO_FULL]) if (!im.complete) await new Promise((r) => { im.onload = im.onerror = r; setTimeout(r, 1500); });
+    for (const im of [LOGO, LOGO_FULL, MOTIF]) if (!im.complete) await new Promise((r) => { im.onload = im.onerror = r; setTimeout(r, 1500); });
     reportPages = R.render(reportData());
     const pv = $('#rep-preview'); pv.innerHTML = '';
     reportPages.forEach((c, i) => { c.setAttribute('role', 'img'); c.setAttribute('aria-label', `리포트 ${i + 1}쪽`); c.className = 'rep-page'; pv.appendChild(c); });
@@ -1615,6 +1618,7 @@
     reportImageBase64: async () => { if (!reportPages) await buildReport(); const b = await reportImageBlob(); return new Promise((r) => { const fr = new FileReader(); fr.onload = () => r(String(fr.result).split(',')[1]); fr.readAsDataURL(b); }); },
     reportPages: () => reportPages && reportPages.length,
     shareCard: () => (current && current.mode === 'face' ? buildFaceShareImage() : buildShareImage()).toDataURL('image/jpeg', 0.85),
+    reportPage: async (i) => { if (!reportPages) await buildReport(); return reportPages[i].toDataURL('image/jpeg', 0.85); },
     reportCover: async () => { if (!reportPages) await buildReport(); return reportPages[0].toDataURL('image/jpeg', 0.85); },
     state: () => ({ current: !!current, season: seasonChoice, name: reportName, ls: (() => { try { return Object.keys(localStorage); } catch (e) { return []; } })() }),
     setSeason: (v) => { setSeasonChoice(v); },

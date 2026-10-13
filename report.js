@@ -50,8 +50,20 @@
     if (this.pages.length > 1) this.runningHeader();
   };
   Doc.prototype.ensure = function (h) { if (this.y + h > BOTTOM) { this.newPage(); return true; } return false; };
+  // 로고 수채 모티프 띠 (앱 화면 · 표지와 같은 이미지)
+  function motifBand(x, d, y0, h, alpha, flip) {
+    var m = d.motif; if (!(m && m.naturalWidth)) return;
+    var mh = W * m.naturalHeight / m.naturalWidth;
+    // 띠 끝이 잘려 보이지 않게 오프스크린에서 안쪽으로 부드럽게 사라지게
+    var c = document.createElement('canvas'); c.width = W; c.height = h; var o = c.getContext('2d');
+    if (flip) { o.translate(W, h); o.rotate(Math.PI); o.drawImage(m, 0, 0, W, mh); o.setTransform(1, 0, 0, 1, 0, 0); }
+    else o.drawImage(m, 0, 0, W, mh);
+    if (h < 400) { var g = o.createLinearGradient(0, flip ? h : 0, 0, flip ? 0 : h); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.45, 'rgba(0,0,0,.8)'); g.addColorStop(1, 'rgba(0,0,0,0)'); o.globalCompositeOperation = 'destination-in'; o.fillStyle = g; o.fillRect(0, 0, W, h); }
+    x.save(); x.globalAlpha = alpha; x.drawImage(c, 0, y0); x.restore();
+  }
   Doc.prototype.runningHeader = function () {
     var x = this.x, d = this.d, L = d.logo;
+    motifBand(x, d, 0, 128, 0.75);
     if (L && L.naturalWidth) { var lw = 92, lh = lw * L.naturalHeight / L.naturalWidth; x.drawImage(L, M, 56, lw, lh); }
     else { font(x, 600, 26); x.fillStyle = INK; x.fillText('H.O.W', M, 84); }
     font(x, 500, 19); x.fillStyle = MUTE; x.textAlign = 'right';
@@ -63,6 +75,7 @@
     var n = this.pages.length, d = this.d;
     this.pages.forEach(function (c, i) {
       var x = c.getContext('2d');
+      motifBand(x, d, H - 100, 100, 0.55, true);
       x.fillStyle = LINE; x.fillRect(M, H - 78, CW, 1.5);
       font(x, 400, 18); x.fillStyle = MUTE; x.textAlign = 'left';
       x.fillText('H.O.W 피부결 테스터' + (d.store ? ' · ' + d.store : '') + ' · v' + d.version + ' · 참고용 결과이며 의학적 진단이 아니에요', M, H - 46);
@@ -198,7 +211,7 @@
   // ---------- 표지 (1페이지 상단) ----------
   function cover(doc) {
     var x = doc.x, d = doc.d, L = d.logoFull || d.logo, y = 70;
-    x.fillStyle = SOFT; x.fillRect(0, 0, W, 560);
+    x.fillStyle = SOFT; x.fillRect(0, 0, W, 560); motifBand(x, d, 0, 560, 1);
     if (L && L.naturalWidth) { var lw = 270, lh = lw * L.naturalHeight / L.naturalWidth; x.drawImage(L, W / 2 - lw / 2, y, lw, lh); y += lh; }
     else { font(x, 600, 64); x.fillStyle = INK; x.textAlign = 'center'; x.fillText('H.O.W', W / 2, y + 60); x.textAlign = 'left'; y += 70; }
     font(x, 600, 17); x.fillStyle = ACC; x.textAlign = 'center'; spaced(x, d.mode === 'face' ? 'FACE SKIN REPORT' : d.mode === 'zones' ? 'ZONE SKIN REPORT' : 'SKIN TEXTURE REPORT', W / 2, y + 62, 6, 'center');

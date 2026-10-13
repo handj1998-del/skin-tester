@@ -708,3 +708,11 @@ body.has-dock .screen.active{padding-bottom:calc(96px + var(--safe-b))}
   @media (max-height:680px){.intro-fold .hero-seal{width:126px;height:auto}}
   @media (min-height:800px){.intro-fold .hero-seal{width:180px;height:auto}}
 }
+
+/* v1.8.0 공통 비주얼: 로고 수채 모티프 + 같은 타이포 위계 (리포트 표지 · 공유 카드와 같은 이미지) */
+.motif-bg{background-image:url(motif.png?v=1.8.0);background-repeat:no-repeat;background-position:50% 0;background-size:100% auto}
+#screen-intro.motif-bg{background-size:150% auto;background-position:50% 0}
+.hero-kicker{margin:0 0 8px;font-size:11px;font-weight:600;letter-spacing:.32em;text-indent:.32em;color:var(--accent)}
+.intro-fold h1,.hero h1{margin:0}
+.hero-rule{display:block;width:28px;height:1.5px;background:var(--accent);margin:12px auto 12px}
+@media (max-height:600px){.hero-kicker{margin-bottom:4px}.hero-rule{margin:8px auto}}
